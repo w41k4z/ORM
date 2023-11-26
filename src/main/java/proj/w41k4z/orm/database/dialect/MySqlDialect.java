@@ -7,22 +7,21 @@ import java.util.Date;
 
 import proj.w41k4z.orm.database.Dialect;
 
-public class PostgresDialect implements Dialect {
+public class MySqlDialect implements Dialect {
 
     @Override
     public String formatDate(Date date) {
-        return "TO_CHAR(" + date.getTime() + ", 'YYYY-MM-DD HH24:MI:SS')";
+        return "'" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date) + "'";
     }
 
     @Override
     public String formatTime(Time time) {
-        return "TO_CHAR('" + new SimpleDateFormat("HH:mm:ss").format(time) + "', 'HH24:MI:SS')";
+        return "'" + new SimpleDateFormat("HH:mm:ss").format(time) + "'";
     }
 
     @Override
     public String formatTimestamp(Timestamp timestamp) {
-        return "TO_CHAR('" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(timestamp)
-                + "', 'YYYY-MM-DD HH24:MI:SS')";
+        return "'" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(timestamp) + "'";
     }
 
     @Override
