@@ -19,6 +19,7 @@ public class Main {
         System.out.println(dataSource.getUrl());
         System.out.println(dataSource.getUserName());
         System.out.println(dataSource.getPassword());
+        System.out.println(dataSource.getDialect().getClass().getName());
     }
 
     public static void tableMetadata() {

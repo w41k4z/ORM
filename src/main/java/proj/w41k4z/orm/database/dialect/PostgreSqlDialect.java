@@ -7,7 +7,7 @@ import java.util.Date;
 
 import proj.w41k4z.orm.database.Dialect;
 
-public class PostgresDialect implements Dialect {
+public class PostgreSqlDialect implements Dialect {
 
     @Override
     public String formatDate(Date date) {

@@ -4,7 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
-import proj.w41k4z.fcr.ConfigurationFile;
 import proj.w41k4z.fcr.PropertiesFile;
 
 import proj.w41k4z.orm.database.DataSource;
@@ -58,9 +57,10 @@ public final class OrmConfiguration {
         PropertiesFile configFile = new PropertiesFile();
         try {
             configFile.load(CONFIG_FILE_NAME);
-            Class<?> dataSource = (String) configFile.getConfig().get(CONFIG_DATASOURCE_CLASS_PROPERTY_NAME) == null
+            String dataSourceClassName = (String) configFile.getConfig().get(CONFIG_DATASOURCE_CLASS_PROPERTY_NAME);
+            Class<?> dataSource = dataSourceClassName == null
                     ? DefaultDataSource.class
-                    : Class.forName((String) configFile.getConfig().get(CONFIG_DATASOURCE_CLASS_PROPERTY_NAME));
+                    : Class.forName(dataSourceClassName);
             return DataSource.loadFrom(dataSource, configFile);
         } catch (FileNotFoundException e) {
             throw new UnsupportedOperationException("The configuration file " + CONFIG_FILE_NAME
@@ -68,38 +68,34 @@ public final class OrmConfiguration {
         }
     }
 
-    public static Dialect getDialect() throws IOException {
-        PropertiesFile configFile = new PropertiesFile();
+    /**
+     * This method is used to get the supported Dialect according to the database
+     * URL.
+     * 
+     * @param databaseUrl The URL of the database
+     * @return The Dialect object
+     */
+    public static Dialect getSupportedCorrespondingDialect(String databaseUrl) {
+        String type = databaseUrl.split(":")[1];
         try {
-            configFile.load(CONFIG_FILE_NAME);
-            String dialectClassString = (String) configFile.getConfig().get(CONFIG_DIALECT_CLASS_PROPERTY_NAME);
-            Dialect dialect = null;
-            if (dialectClassString == null) {
-
-            } else {
-
+            switch (type) {
+                case "postgresql":
+                    return (Dialect) Class.forName("proj.w41k4z.orm.database.dialect.PostgreSqlDialect")
+                            .getConstructor()
+                            .newInstance();
+                case "mysql":
+                    return (Dialect) Class.forName("proj.w41k4z.orm.database.dialect.MySqlDialect").getConstructor()
+                            .newInstance();
+                default:
+                    throw new UnsupportedOperationException("The database type " + type + " is not supported.");
             }
-            return dialect;
-        } catch (FileNotFoundException e) {
-            throw new UnsupportedOperationException("The configuration file " + CONFIG_FILE_NAME
-                    + " was not found on the root path of this project. Check the documentation for more information.");
-        }
-    }
-
-    private static String getSupportedCorrespondingDialect(String type) {
-        switch (type) {
-            case "org.postgresql.Driver":
-                return "proj.w41k4z.orm.database.dialect.PostgreSqlDialect";
-            case "com.mysql.cj.jdbc.Driver":
-                return "proj.w41k4z.orm.database.dialect.MySqlDialect";
-            case "org.mariadb.jdbc.Driver":
-                return "proj.w41k4z.orm.database.dialect.MariaDbDialect";
-            case "org.h2.Driver":
-                return "proj.w41k4z.orm.database.dialect.H2Dialect";
-            case "org.sqlite.JDBC":
-                return "proj.w41k4z.orm.database.dialect.SqliteDialect";
-            default:
-                throw new UnsupportedOperationException("The database type " + type + " is not supported.");
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
+            /*
+             * These exceptions should not be thrown because the dialects are already
+             * implemented
+             */
+            throw new UnsupportedOperationException("Something went wrong with the ORM dependency");
         }
     }
 }
