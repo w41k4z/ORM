@@ -10,10 +10,10 @@ import proj.w41k4z.orm.OrmConfiguration;
 import proj.w41k4z.orm.annotation.ConfigProperty;
 
 /**
- * A class needed to configure the database connection (URL, Username,
- * Password...).
- * This class is used to load the DataSource from the configuration file by
- * default, using its implementation {@link DefaultDataSource}.
+ * This is an abstract class needed for the configuration of the database
+ * connection (URL, Username, Password...).
+ * This class is also used to load the DataSource from the configuration file by
+ * default, using its default implementation {@link DefaultDataSource}.
  * You can always create your own DataSource implementation and load it from the
  * configuration file using the method
  * {@link DataSource#loadFrom(Class, ConfigurationFile) loadFrom(Class,
@@ -26,6 +26,9 @@ public abstract class DataSource {
      */
     private Dialect dialect;
 
+    /**
+     * This class should not be instantiated
+     */
     protected DataSource() {
     }
 
@@ -65,7 +68,7 @@ public abstract class DataSource {
             JavaClass.setObjectFieldValue(dataSource, dataSourceProperties.get(propertyName), field);
         }
 
-        // Check if the DataSource has a URL, a userName and a password
+        // Check if the DataSource has an URL, an userName and a password
         if (dataSource.getUrl() == null || dataSource.getUserName() == null || dataSource.getPassword() == null) {
             throw new IllegalArgumentException("The DataSource must have a URL, a userName and a password. Check your "
                     + dataSourceImplClass.getSimpleName()

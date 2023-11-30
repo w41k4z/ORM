@@ -7,6 +7,10 @@ import java.util.Date;
 
 import proj.w41k4z.orm.database.Dialect;
 
+/**
+ * This is the PostgreSQL dialect. It is used to format the different types of
+ * data in the PostgreSQL database.
+ */
 public class PostgreSqlDialect implements Dialect {
 
     @Override

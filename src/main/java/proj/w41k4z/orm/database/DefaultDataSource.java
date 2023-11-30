@@ -1,20 +1,22 @@
 package proj.w41k4z.orm.database;
 
+import proj.w41k4z.orm.OrmConfiguration;
 import proj.w41k4z.orm.annotation.ConfigProperty;
 
 /**
  * This class is the default implementation of the DataSource class.
- * When working with this ORM, this will be the default DataSource.
+ * This class can not be extended, You have to create your own implementation of
+ * the DataSource for specific need
  */
 public final class DefaultDataSource extends DataSource {
 
-    @ConfigProperty("database.url")
+    @ConfigProperty(OrmConfiguration.CONFIG_DEFAULT_DB_URL_PROPERTY)
     private String url;
 
-    @ConfigProperty("database.userName")
+    @ConfigProperty(OrmConfiguration.CONFIG_DEFAULT_DB_USER_PROPERTY)
     private String userName;
 
-    @ConfigProperty("database.password")
+    @ConfigProperty(OrmConfiguration.CONFIG_DEFAULT_DB_PASSWORD_PROPERTY)
     private String password;
 
     @Override

@@ -31,8 +31,36 @@ import proj.w41k4z.orm.database.Dialect;
  */
 public final class OrmConfiguration {
 
+    /**
+     * The ORM configuration file name at the root path
+     */
     public static final String CONFIG_FILE_NAME = "orm.properties";
+
+    /**
+     * The default property name of the database URL from the configuration file
+     */
+    public static final String CONFIG_DEFAULT_DB_URL_PROPERTY = "database.url";
+
+    /**
+     * The default property name of the database username from the configuration
+     * file
+     */
+    public static final String CONFIG_DEFAULT_DB_USER_PROPERTY = "database.userName";
+
+    /**
+     * The default property name of the database password from the configuration
+     */
+    public static final String CONFIG_DEFAULT_DB_PASSWORD_PROPERTY = "database.password";
+
+    /**
+     * The property name of the custom DataSource implementation from the
+     * configuration
+     */
     public static final String CONFIG_DATASOURCE_CLASS_PROPERTY_NAME = "datasource.class";
+
+    /**
+     * The property name of the custom Dialect implementation from the configuration
+     */
     public static final String CONFIG_DIALECT_CLASS_PROPERTY_NAME = "dialect.class";
 
     /**
