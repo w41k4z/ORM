@@ -4,7 +4,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import proj.w41k4z.fcr.ConfigurationFile;
@@ -25,11 +24,11 @@ public class Main {
         // .OR("a", Operator.ENW, val2)
         // .AND("b", Operator.G, val3)
         // .AND("c", Operator.L, val4).getCondition());
-
         test();
     }
 
     public static void test() throws ClassNotFoundException {
-        Class.forName("OQL");
+        Object[] test = new Object[0];
+        System.out.println(test.length);
     }
 }
