@@ -22,6 +22,16 @@ public class NativeQueryBuilder {
     }
 
     /**
+     * Constructor for raw SELECT request with Condition
+     * 
+     * @param rawRequest the raw request
+     */
+    public NativeQueryBuilder(String rawRequest, Condition condition) {
+        StringBuilder request = new StringBuilder("SELECT temp.* FROM (" + rawRequest.toString() + ") temp");
+        this.request = request.append(condition.getCondition());
+    }
+
+    /**
      * Constructor for SELECT request.
      * 
      * @param type

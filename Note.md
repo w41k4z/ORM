@@ -1,8 +1,16 @@
 # OQL
 
-    - perimeter clause (+ jointure)
-    - restriction clause (WHERE)
-    - regroupement clause (GROUP BY, HAVING)
-    - sort clause (ORDER BY)
+    - ADD query
+    - UPDATE query
+    - DELETE query
 
-Parent dependency are not supported yet, think about it
+# QueryExecutor
+
+    - executeDMR (Data Manipulation Request)
+    - executeDQR (Data Query Request)
+
+## Relationship
+
+    - One to Many
+    - Many to Many
+    - Many to One (--optional)

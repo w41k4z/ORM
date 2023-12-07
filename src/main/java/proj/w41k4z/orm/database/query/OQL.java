@@ -5,9 +5,9 @@ import proj.w41k4z.orm.annotation.DiscriminatorValue;
 import proj.w41k4z.orm.annotation.relationship.Inheritance;
 import proj.w41k4z.orm.annotation.relationship.Key;
 import proj.w41k4z.orm.database.request.NativeQueryBuilder;
+import proj.w41k4z.orm.spec.EntityAccess;
 import proj.w41k4z.orm.spec.EntityChild;
 import proj.w41k4z.orm.spec.EntityField;
-import proj.w41k4z.orm.spec.EntityManager;
 
 /**
  * OQL (Object Query Language) is a class used to generate query on object,
@@ -40,6 +40,31 @@ public class OQL {
     }
 
     /**
+     * This method builds the object query according to the query type
+     */
+    private void build() {
+        // query type clause
+        this.objectQuery.append(this.queryType.toString().concat(" "));
+        switch (this.queryType) {
+            case GET:
+                this.buildGETQuery();
+                break;
+            default:
+                throw new UnsupportedOperationException("Unimplemented code.");
+        }
+    }
+
+    /**
+     * This method build a GET query
+     */
+    private void buildGETQuery() {
+        // target column clause
+        this.objectQuery.append(this.getColumnTarget());
+        this.objectQuery.append(" OF " + this.getPerimeterClause());
+        this.objectQuery.append(this.getRestrictionClause());
+    }
+
+    /**
      * This method returns the column target of the query. Only used with GET
      * QueryType
      * 
@@ -49,15 +74,15 @@ public class OQL {
         StringBuilder columnTarget = new StringBuilder();
 
         // main columns
-        EntityField[] mainColumns = EntityManager.getEntityColumns(this.entityClass, null);
+        EntityField[] mainColumns = EntityAccess.getColumns(this.entityClass, null);
         for (EntityField column : mainColumns) {
             columnTarget.append(column.getFullColumnName() + ", ");
         }
 
         // child columns
-        EntityChild[] entityChilds = EntityManager.getEntityChild(this.entityClass);
+        EntityChild[] entityChilds = EntityAccess.getRelatedChildren(this.entityClass);
         for (EntityChild child : entityChilds) {
-            EntityField[] chilcColumns = EntityManager.getEntityColumns(child.getEntityClass(), null);
+            EntityField[] chilcColumns = EntityAccess.getColumns(child.getEntityClass(), null);
             for (EntityField column : chilcColumns) {
                 columnTarget.append(column.getFullColumnName() + ", ");
             }
@@ -77,35 +102,34 @@ public class OQL {
         StringBuilder perimeterClause = new StringBuilder();
 
         // Only applies on JOINED_TABLE inheritance type
-        Class<?>[] mainTables = EntityManager.getRelatedEntityTableClasses(this.entityClass);
-        String mainTableName = EntityManager.getEntityTableName(mainTables[0]);
+        Class<?>[] mainTables = EntityAccess.getRelatedEntityClasses(this.entityClass);
+        String mainTableName = EntityAccess.getTableName(mainTables[0]);
         perimeterClause.append(mainTableName);
         for (int i = 1; i < mainTables.length; i++) {
-            String parentTable = EntityManager.getEntityTableName(mainTables[i]);
-            perimeterClause.append(" LEFT JOIN " + EntityManager.getEntityTableName(mainTables[i]));
+            String parentTable = EntityAccess.getTableName(mainTables[i]);
+            perimeterClause.append(" LEFT JOIN " + EntityAccess.getTableName(mainTables[i]));
             perimeterClause
-                    .append(" ON " + mainTableName + "." + EntityManager.getEntityId(mainTables[0]).getColumnName()
-                            + " = " + parentTable + "." + EntityManager.getEntityId(mainTables[i]).getColumnName());
+                    .append(" ON " + mainTableName + "." + EntityAccess.getId(mainTables[0]).getColumnName()
+                            + " = " + parentTable + "." + EntityAccess.getId(mainTables[i]).getColumnName());
         }
 
-        // Child tables
-        EntityChild[] children = EntityManager.getEntityChild(this.entityClass);
+        // Children JOIN
+        EntityChild[] children = EntityAccess.getRelatedChildren(this.entityClass);
         for (EntityChild child : children) {
-            // main table
-            Class<?>[] childMainTableClasses = EntityManager.getRelatedEntityTableClasses(child.getEntityClass());
-            String childMainTable = EntityManager.getEntityTableName(childMainTableClasses[0]);
+            Class<?>[] childMainTableClasses = EntityAccess.getRelatedEntityClasses(child.getEntityClass());
+            String childMainTable = EntityAccess.getTableName(childMainTableClasses[0]);
             perimeterClause.append(" LEFT JOIN " + childMainTable);
             perimeterClause.append(" ON " + childMainTable + "."
-                    + EntityManager.getEntityId(child.getEntityClass()).getColumnName() + " = " + mainTableName + "."
+                    + EntityAccess.getId(child.getEntityClass()).getColumnName() + " = " + mainTableName + "."
                     + child.getField().getAnnotation(Key.class).column());
 
-            // child table dependency table
+            // child dependency table
             for (int i = 1; i < childMainTableClasses.length; i++) {
-                String parentTable = EntityManager.getEntityTableName(childMainTableClasses[i]);
+                String parentTable = EntityAccess.getTableName(childMainTableClasses[i]);
                 perimeterClause.append(" LEFT JOIN " + parentTable);
                 perimeterClause
                         .append(" ON " + childMainTable + "."
-                                + EntityManager.getEntityId(childMainTableClasses[0]).getColumnName()
+                                + EntityAccess.getId(childMainTableClasses[0]).getColumnName()
                                 + " = " + parentTable + "."
                                 + parentTable);
             }
@@ -148,30 +172,5 @@ public class OQL {
         }
 
         return restrictionClause.toString();
-    }
-
-    /**
-     * This method builds the object query according to the query type
-     */
-    private void build() {
-        // query type clause
-        this.objectQuery.append(this.queryType.toString().concat(" "));
-        switch (this.queryType) {
-            case GET:
-                this.buildGETQuery();
-                break;
-            default:
-                throw new UnsupportedOperationException("Unimplemented code.");
-        }
-    }
-
-    /**
-     * This method build a GET query
-     */
-    private void buildGETQuery() {
-        // target column clause
-        this.objectQuery.append(this.getColumnTarget());
-        this.objectQuery.append(" OF " + this.getPerimeterClause());
-        this.objectQuery.append(this.getRestrictionClause());
     }
 }

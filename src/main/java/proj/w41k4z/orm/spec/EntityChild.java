@@ -9,24 +9,20 @@ import proj.w41k4z.orm.annotation.relationship.Key;
 public class EntityChild {
 
     private Field field;
-    private EntityField[] entityFields;
-    private Class<?>[] entityTableClasses;
 
     /**
-     * Default constructor. This is meant to be used by the EntityManager (which
-     * have some control) so it can not be instatiated from else where
+     * Default constructor. This is meant to be used by the EntityAccess (which
+     * handle some checks) so it can not be instatiated from else where.
      * 
      * @param field the entity field
      */
     protected EntityChild(Field field) {
         if (!field.isAnnotationPresent(Key.class)) {
             throw new IllegalArgumentException(
-                    "The annotation @Key is missing for this child relationship. Do not forget it");
+                    "The annotation @Key is missing for this child relationship. Do not forget it. Source: "
+                            + field.getDeclaringClass().getSimpleName() + "." + field.getName());
         }
         this.field = field;
-        Class<?> entityClass = field.getType().isArray() ? field.getType().getComponentType() : field.getType();
-        this.entityFields = EntityManager.getEntityColumns(entityClass, null);
-        this.entityTableClasses = EntityManager.getRelatedEntityTableClasses(entityClass);
     }
 
     /**
