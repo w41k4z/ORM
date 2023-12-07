@@ -28,7 +28,11 @@ public class Main {
     }
 
     public static void test() throws ClassNotFoundException {
-        Object[] test = new Object[0];
-        System.out.println(test.length);
+        StringBuilder test = new StringBuilder("test, ");
+        System.out.println(test + ": " + test.length());
+        test.delete(test.length() - 2, test.length());
+        System.out.println(test + ": " + test.length());
+        test.append("YES");
+        System.out.println(test);
     }
 }

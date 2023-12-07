@@ -1,7 +1,7 @@
 package proj.w41k4z.orm.database.request;
 
 /**
- * This class is used to add custom condition to database request.
+ * This class is used to add custom condition to native query request.
  */
 public class Condition {
 
@@ -37,6 +37,14 @@ public class Condition {
         return newCondition;
     }
 
+    /**
+     * This method is used to get an instance of a Condition
+     * 
+     * @param field    the concerned field
+     * @param operator the operator to use
+     * @param value    the field value
+     * @return a new instance of Condition
+     */
     public static Condition WHERE(String field, Operator operator, Object value) {
         try {
             StringBuilder requestCondition = new StringBuilder(" WHERE ");
@@ -52,6 +60,14 @@ public class Condition {
         }
     }
 
+    /**
+     * This method is used to append an AND clause to the current Condition
+     * 
+     * @param field    the concerned field
+     * @param operator the operator to use
+     * @param value    the column value
+     * @return the same instance of Condition with the AND clause
+     */
     public Condition AND(String field, Operator operator, Object value) {
         if (this.isRaw) {
             throw new UnsupportedOperationException(
@@ -70,6 +86,14 @@ public class Condition {
         }
     }
 
+    /**
+     * This method is used to append an OR clause to the current Condition
+     * 
+     * @param field    the concerned field
+     * @param operator the operator to use
+     * @param value    the column value
+     * @return the same instance of Condition with the OR clause
+     */
     public Condition OR(String field, Operator operator, Object value) {
         if (this.isRaw) {
             throw new UnsupportedOperationException(

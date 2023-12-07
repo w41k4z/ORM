@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This annotation is used to specify that the target class in an entity.
+ * This annotation is used to specify that the target class is an entity.
  * It can also contain additional information related to the table it is mapped
  * to, such as the table name...
  */

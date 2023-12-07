@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This annotation is used to specify the name of the property in the
+ * This annotation is used to specify a property related to the
  * configuration file.
  */
 @Target(ElementType.FIELD)

@@ -2,9 +2,6 @@ package proj.w41k4z.orm.spec;
 
 import java.lang.reflect.Field;
 
-import proj.w41k4z.orm.annotation.Entity;
-import proj.w41k4z.orm.annotation.Column;
-
 /**
  * {@code EntityField} is a class used to store information about an entity
  * field.
@@ -27,8 +24,7 @@ public class EntityField {
         this.field = field;
         this.entityClass = entityClass;
         this.fieldName = field.getName();
-        this.columnName = field.getAnnotation(Column.class).name().equals("") ? this.fieldName
-                : field.getAnnotation(Column.class).name();
+        this.columnName = EntityManager.getEntityColumnName(field);
     }
 
     /**
@@ -68,15 +64,22 @@ public class EntityField {
     }
 
     /**
+     * Get the table name of this field
+     * 
+     * @return the table name
+     */
+    public String getTableName() {
+        return EntityManager.getEntityTableName(entityClass);
+    }
+
+    /**
      * Get the column name with the entity name.
      * Like this: entity1.column1
      * 
      * @return the full column name
      */
     public String getFullColumnName() {
-        String tableName = this.entityClass.getAnnotation(Entity.class).table().equals("")
-                ? this.entityClass.getSimpleName()
-                : this.entityClass.getAnnotation(Entity.class).table();
-        return tableName.concat(".").concat(this.columnName);
+        String tableName = this.getTableName();
+        return tableName.concat(".").concat(this.columnName).concat(" " + this.columnName + "__of__" + tableName);
     }
 }

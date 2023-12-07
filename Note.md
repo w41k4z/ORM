@@ -1,4 +1,8 @@
-# QueryBuilder:
+# OQL
 
-    - Constructor for each 4 type of request (to fix, so no more Type in the parameters)
-    - ObjectQueryLanguage (OQL) to query the database
+    - perimeter clause (+ jointure)
+    - restriction clause (WHERE)
+    - regroupement clause (GROUP BY, HAVING)
+    - sort clause (ORDER BY)
+
+Parent dependency are not supported yet, think about it

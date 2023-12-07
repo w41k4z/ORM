@@ -1,14 +1,14 @@
-package proj.w41k4z.orm.annotation.relationship;
+package proj.w41k4z.orm.annotation;
 
-import java.lang.annotation.Target;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * This annotation is used to indicate a Many to Many relationship.
+ * This annotation indicates that a field is an entity id.
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ManyToMany {
+public @interface Id {
 }
