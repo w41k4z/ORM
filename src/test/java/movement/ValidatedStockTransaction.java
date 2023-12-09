@@ -1,5 +1,6 @@
 package movement;
 
+import proj.w41k4z.orm.annotation.Column;
 import proj.w41k4z.orm.annotation.DiscriminatorColumn;
 import proj.w41k4z.orm.annotation.Entity;
 import proj.w41k4z.orm.annotation.Id;
@@ -12,6 +13,7 @@ import proj.w41k4z.orm.enumeration.InheritanceType;
 public abstract class ValidatedStockTransaction extends StockMovement {
 
     @Id
+    @Column
     private Long id;
 
     public Long getId() {

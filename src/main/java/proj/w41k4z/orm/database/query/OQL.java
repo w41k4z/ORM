@@ -1,13 +1,19 @@
 package proj.w41k4z.orm.database.query;
 
+import java.lang.reflect.InvocationTargetException;
+
+import proj.w41k4z.helpers.java.JavaClass;
 import proj.w41k4z.orm.annotation.DiscriminatorColumn;
 import proj.w41k4z.orm.annotation.DiscriminatorValue;
 import proj.w41k4z.orm.annotation.relationship.Inheritance;
 import proj.w41k4z.orm.annotation.relationship.Key;
+import proj.w41k4z.orm.database.Dialect;
 import proj.w41k4z.orm.database.request.NativeQueryBuilder;
+import proj.w41k4z.orm.enumeration.InheritanceType;
 import proj.w41k4z.orm.spec.EntityAccess;
 import proj.w41k4z.orm.spec.EntityChild;
 import proj.w41k4z.orm.spec.EntityField;
+import proj.w41k4z.orm.spec.EntityMetadata;
 
 /**
  * OQL (Object Query Language) is a class used to generate query on object,
@@ -19,14 +25,17 @@ import proj.w41k4z.orm.spec.EntityField;
 public class OQL {
 
     private QueryType queryType;
-    private Class<?> entityClass;
+    private Object entity;
+    private EntityMetadata entityMetadata;
+    private Dialect dialect;
     private StringBuilder objectQuery;
 
-    public OQL(QueryType type, Class<?> entity) {
+    public OQL(QueryType type, Object entity, Dialect dialect) {
         this.objectQuery = new StringBuilder();
         this.queryType = type;
-        this.entityClass = entity;
-        this.build();
+        this.entity = entity;
+        this.entityMetadata = EntityAccess.getEntityMetadata(entity.getClass());
+        this.dialect = dialect;
     }
 
     /**
@@ -34,20 +43,47 @@ public class OQL {
      * 
      * @return a NativeQueryBuilder according to the translated
      *         OQL
+     * @throws InvocationTargetException if the getter (for DMQ) method is not
+     *                                   accessible
+     * @throws IllegalArgumentException  if the getter (for DMQ) method is not
+     *                                   accessible
+     * @throws IllegalAccessException    if the getter (for DMQ) method is not
+     *                                   accessible
+     * @throws NoSuchMethodException     if the getter (for DMQ) method is not found
      */
-    public NativeQueryBuilder toNativeQuery() {
-        return new NativeQueryBuilder(this.objectQuery.toString().replaceAll("GET", "SELECT").replaceAll("OF", "FROM"));
+    public NativeQueryBuilder toNativeQuery()
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        this.build();
+        switch (this.queryType) {
+            case GET:
+                return new NativeQueryBuilder(
+                        this.objectQuery.toString().replaceAll("GET", "SELECT").replaceAll("OF", "FROM"));
+            case ADD:
+                return new NativeQueryBuilder(
+                        this.objectQuery.toString().replaceAll("ADD", "INSERT").replaceAll("TO", "INTO"));
+            default:
+                return null;
+        }
     }
 
     /**
      * This method builds the object query according to the query type
+     * 
+     * @throws InvocationTargetException if the getter method is not accessible
+     * @throws IllegalArgumentException  if the getter method is not accessible
+     * @throws IllegalAccessException    if the getter method is not accessible
+     * @throws NoSuchMethodException     if the getter method is not found
      */
-    private void build() {
+    private void build()
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         // query type clause
         this.objectQuery.append(this.queryType.toString().concat(" "));
         switch (this.queryType) {
             case GET:
                 this.buildGETQuery();
+                break;
+            case ADD:
+                this.buildADDQuery();
                 break;
             default:
                 throw new UnsupportedOperationException("Unimplemented code.");
@@ -59,31 +95,47 @@ public class OQL {
      */
     private void buildGETQuery() {
         // target column clause
-        this.objectQuery.append(this.getColumnTarget());
-        this.objectQuery.append(" OF " + this.getPerimeterClause());
-        this.objectQuery.append(this.getRestrictionClause());
+        this.objectQuery.append(this.GETColumnTarget());
+        // perimeter clause
+        this.objectQuery.append(" OF " + this.GETPerimeterClause());
+        // restriction clause
+        this.objectQuery.append(this.GETRestrictionClause());
     }
 
     /**
-     * This method returns the column target of the query. Only used with GET
+     * This method build an ADD query
+     * 
+     * @throws InvocationTargetException
+     * @throws IllegalArgumentException
+     * @throws IllegalAccessException
+     * @throws NoSuchMethodException
+     */
+    private void buildADDQuery()
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        // target column clause
+        this.objectQuery.append("TO " + this.entityMetadata.getTableName());
+        this.objectQuery.append(this.ADDColumnTarget());
+        this.objectQuery.append(" VALUES " + this.ADDColumnValue());
+    }
+
+    /**
+     * This method returns the column target of the query. Mainly used with GET
      * QueryType
      * 
      * @return a String concatenated of all concerned column
      */
-    private String getColumnTarget() {
+    private String GETColumnTarget() {
         StringBuilder columnTarget = new StringBuilder();
 
-        // main columns
-        EntityField[] mainColumns = EntityAccess.getColumns(this.entityClass, null);
-        for (EntityField column : mainColumns) {
+        // inherited + current column fields;
+        for (EntityField column : this.entityMetadata.getAllEntityFields()) {
             columnTarget.append(column.getFullColumnName() + ", ");
         }
 
         // child columns
-        EntityChild[] entityChilds = EntityAccess.getRelatedChildren(this.entityClass);
-        for (EntityChild child : entityChilds) {
-            EntityField[] chilcColumns = EntityAccess.getColumns(child.getEntityClass(), null);
-            for (EntityField column : chilcColumns) {
+        for (EntityChild child : this.entityMetadata.getRelatedEntityChildren()) {
+            EntityField[] childColumns = EntityAccess.getAllEntityFields(child.getEntityClass(), null);
+            for (EntityField column : childColumns) {
                 columnTarget.append(column.getFullColumnName() + ", ");
             }
         }
@@ -98,40 +150,52 @@ public class OQL {
      * 
      * @return a String concatenated of all the concerned table
      */
-    private String getPerimeterClause() {
+    private String GETPerimeterClause() {
         StringBuilder perimeterClause = new StringBuilder();
 
-        // Only applies on JOINED_TABLE inheritance type
-        Class<?>[] mainTables = EntityAccess.getRelatedEntityClasses(this.entityClass);
-        String mainTableName = EntityAccess.getTableName(mainTables[0]);
+        Class<?>[] mainEntityClasses = this.entityMetadata.getRelatedEntityClasses();
+        String mainTableName = this.entityMetadata.getTableName();
+        String mainTableIdColumnName = EntityAccess.getId(mainEntityClasses[0]).getColumnName();
         perimeterClause.append(mainTableName);
-        for (int i = 1; i < mainTables.length; i++) {
-            String parentTable = EntityAccess.getTableName(mainTables[i]);
-            perimeterClause.append(" LEFT JOIN " + EntityAccess.getTableName(mainTables[i]));
-            perimeterClause
-                    .append(" ON " + mainTableName + "." + EntityAccess.getId(mainTables[0]).getColumnName()
-                            + " = " + parentTable + "." + EntityAccess.getId(mainTables[i]).getColumnName());
+        // This part only applies on JOINED_TABLE inheritance type
+        for (int i = 1; i < mainEntityClasses.length; i++) {
+            String relatedTableName = EntityAccess.getTableName(mainEntityClasses[i]);
+            String relatedTableIdColumnName = EntityAccess.getId(mainEntityClasses[i]).getColumnName();
+
+            perimeterClause.append(" LEFT JOIN ");
+            perimeterClause.append(relatedTableName);
+            perimeterClause.append(" ON ");
+            perimeterClause.append(mainTableName + "." + mainTableIdColumnName);
+            perimeterClause.append(" = ");
+            perimeterClause.append(relatedTableName + "." + relatedTableIdColumnName);
         }
 
-        // Children JOIN
-        EntityChild[] children = EntityAccess.getRelatedChildren(this.entityClass);
-        for (EntityChild child : children) {
-            Class<?>[] childMainTableClasses = EntityAccess.getRelatedEntityClasses(child.getEntityClass());
-            String childMainTable = EntityAccess.getTableName(childMainTableClasses[0]);
-            perimeterClause.append(" LEFT JOIN " + childMainTable);
-            perimeterClause.append(" ON " + childMainTable + "."
-                    + EntityAccess.getId(child.getEntityClass()).getColumnName() + " = " + mainTableName + "."
-                    + child.getField().getAnnotation(Key.class).column());
+        // Joining children
+        for (EntityChild child : this.entityMetadata.getRelatedEntityChildren()) {
+            Class<?>[] childMainEntityClasses = EntityAccess.getRelatedEntityClasses(child.getEntityClass());
+            String childMainTableName = EntityAccess.getTableName(childMainEntityClasses[0]);
 
-            // child dependency table
-            for (int i = 1; i < childMainTableClasses.length; i++) {
-                String parentTable = EntityAccess.getTableName(childMainTableClasses[i]);
-                perimeterClause.append(" LEFT JOIN " + parentTable);
-                perimeterClause
-                        .append(" ON " + childMainTable + "."
-                                + EntityAccess.getId(childMainTableClasses[0]).getColumnName()
-                                + " = " + parentTable + "."
-                                + parentTable);
+            String childIdColumnName = EntityAccess.getId(child.getEntityClass()).getColumnName();
+            String joinColumnName = child.getField().getAnnotation(Key.class).column();
+
+            perimeterClause.append(" LEFT JOIN ");
+            perimeterClause.append(childMainTableName);
+            perimeterClause.append(" ON ");
+            perimeterClause.append(mainTableName + "." + joinColumnName);
+            perimeterClause.append(" = ");
+            perimeterClause.append(childMainTableName + "." + childIdColumnName);
+
+            // This part only applies on JOINED_TABLE inheritance type
+            for (int i = 1; i < childMainEntityClasses.length; i++) {
+                String relatedTableName = EntityAccess.getTableName(childMainEntityClasses[i]);
+                String relatedTableIdColumnName = EntityAccess.getId(childMainEntityClasses[i]).getColumnName();
+
+                perimeterClause.append(" LEFT JOIN ");
+                perimeterClause.append(relatedTableName);
+                perimeterClause.append(" ON ");
+                perimeterClause.append(relatedTableName + "." + relatedTableIdColumnName);
+                perimeterClause.append(" = ");
+                perimeterClause.append(childMainTableName + "." + childIdColumnName);
             }
         }
 
@@ -140,37 +204,134 @@ public class OQL {
 
     /**
      * This method returns the restriction clause of the query.
+     * This mainly applies on SAME_TABLE inheritance type
      * 
      * @return a String concatenated of the restriction
      */
-    private String getRestrictionClause() {
+    private String GETRestrictionClause() {
         StringBuilder restrictionClause = new StringBuilder("");
-        if (!this.entityClass.getSuperclass().equals(Object.class)
-                && this.entityClass.getSuperclass().isAnnotationPresent(Inheritance.class)) {
-            switch (this.entityClass.getSuperclass().getAnnotation(Inheritance.class).type()) {
-                case SAME_TABLE:
-                    if (!this.entityClass.getSuperclass().isAnnotationPresent(DiscriminatorColumn.class)) {
-                        throw new UnsupportedOperationException("The entity "
-                                + this.entityClass.getSuperclass().getSimpleName()
-                                + " is not annotated with @DiscriminatorColumn. SAME_TABLE inheritance needs this annotation.");
-                    }
-                    if (!this.entityClass.isAnnotationPresent(DiscriminatorValue.class)) {
-                        throw new UnsupportedOperationException("The entity " + this.entityClass.getSimpleName()
-                                + " is not annotated with @DiscriminatorValue. SAME_TABLE inheritance needs this annotation to be able to work with this entity.");
-                    }
-                    restrictionClause.append(" WHERE ");
-                    restrictionClause
-                            .append(this.entityClass.getSuperclass().getAnnotation(DiscriminatorColumn.class).value());
-                    restrictionClause.append(" = '");
-                    restrictionClause.append(this.entityClass.getAnnotation(DiscriminatorValue.class).value());
-                    restrictionClause.append("'");
-                    break;
+        Class<?> entityClass = this.entityMetadata.getEntityClass();
+        Class<?> superClass = this.entityMetadata.getEntityClass().getSuperclass();
 
-                default:
-                    break;
+        // This part only applies on SAME_TABLE inheritance type
+        if (!superClass.equals(Object.class) && superClass.isAnnotationPresent(Inheritance.class)) {
+            if (superClass.getAnnotation(Inheritance.class).type().equals(InheritanceType.SAME_TABLE)) {
+                // Checking if the super class entity is annotated with @DiscriminatorColumn
+                if (!superClass.isAnnotationPresent(DiscriminatorColumn.class)) {
+                    throw new UnsupportedOperationException("The entity " + superClass.getSimpleName()
+                            + " is not annotated with @DiscriminatorColumn. SAME_TABLE inheritance needs this annotation.");
+                }
+                // Checking if the entity is annotated with @DiscriminatorValue
+                if (!entityClass.isAnnotationPresent(DiscriminatorValue.class)) {
+                    throw new UnsupportedOperationException("The entity " + entityClass.getSimpleName()
+                            + " is not annotated with @DiscriminatorValue. SAME_TABLE inheritance needs this annotation to be able to work with this entity.");
+                }
+                String discriminatorColumnName = superClass.getAnnotation(DiscriminatorColumn.class).value();
+                String discriminatorColumnValue = entityClass.getAnnotation(DiscriminatorValue.class).value();
+
+                restrictionClause.append(" WHERE ");
+                restrictionClause.append(discriminatorColumnName);
+                restrictionClause.append(" = '");
+                restrictionClause.append(discriminatorColumnValue);
+                restrictionClause.append("'");
             }
         }
 
         return restrictionClause.toString();
+    }
+
+    /**
+     * This method returns the column target. Only used with ADD QueryType
+     * 
+     * @return a String concatenated of all concerned column
+     */
+    private String ADDColumnTarget() {
+        StringBuilder columnTarget = new StringBuilder("(");
+
+        for (EntityField column : this.entityMetadata.getEntityFields()) {
+            columnTarget.append(column.getColumnName() + ", ");
+        }
+        // Only occurs on SAME_TABLE inheritance type
+        Class<?> superClass = this.entityMetadata.getEntityClass().getSuperclass();
+        if (!superClass.equals(Object.class) && superClass.isAnnotationPresent(Inheritance.class)) {
+            if (superClass.getAnnotation(Inheritance.class).type().equals(InheritanceType.SAME_TABLE)) {
+                // Checking if the super class entity is annotated with @DiscriminatorColumn
+                if (!superClass.isAnnotationPresent(DiscriminatorColumn.class)) {
+                    throw new UnsupportedOperationException("The entity " + superClass.getSimpleName()
+                            + " is not annotated with @DiscriminatorColumn. SAME_TABLE inheritance needs this annotation.");
+                }
+                columnTarget.append(superClass.getAnnotation(DiscriminatorColumn.class).value() + ", ");
+            }
+        }
+        columnTarget.delete(columnTarget.length() - 2, columnTarget.length());
+        columnTarget.append(")");
+
+        return columnTarget.toString();
+    }
+
+    /**
+     * This method returns the column value. Only used with ADD QueryType
+     * 
+     * @return a String concatenated of all concerned column value
+     * @throws NoSuchMethodException     if the getter method is not found
+     * @throws IllegalAccessException    if the getter method is not accessible
+     * @throws IllegalArgumentException  if the getter method is not accessible
+     * @throws InvocationTargetException if the getter method is not accessible
+     */
+    private String ADDColumnValue()
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        StringBuilder columnValue = new StringBuilder("(");
+
+        for (EntityField column : this.entityMetadata.getEntityFields()) {
+            Object fieldValue = null;
+            if (EntityField.isRelatedEntityField(column.getField())) {
+                Object relatedEntityFieldValue = JavaClass.getObjectFieldValue(this.entity, column.getField());
+                fieldValue = relatedEntityFieldValue == null ? null
+                        : JavaClass.getObjectFieldValue(relatedEntityFieldValue,
+                                EntityAccess.getId(column.getEntityClass()).getField());
+            } else {
+                fieldValue = JavaClass.getObjectFieldValue(this.entity, column.getField());
+            }
+
+            String value = "NULL";
+            if (fieldValue != null) {
+                switch (column.getField().getType().getSimpleName()) {
+                    case "Timestamp":
+                        value = this.dialect.formatDate((java.sql.Timestamp) fieldValue);
+                        break;
+                    case "Date":
+                        value = this.dialect.formatDate((java.sql.Date) fieldValue);
+                        break;
+                    case "Time":
+                        value = this.dialect.formatDate((java.sql.Time) fieldValue);
+                        break;
+                    case "Boolean":
+                        value = this.dialect.formatBoolean((Boolean) fieldValue);
+                        break;
+                    default:
+                        value = this.dialect.formatNumber((Number) fieldValue);
+                        break;
+                }
+            }
+
+            columnValue.append(value + ", ");
+        }
+        // Only occurs on SAME_TABLE inheritance type
+        Class<?> superClass = this.entityMetadata.getEntityClass().getSuperclass();
+        Class<?> entityClass = this.entityMetadata.getEntityClass();
+        if (!superClass.equals(Object.class) && superClass.isAnnotationPresent(Inheritance.class)) {
+            if (superClass.getAnnotation(Inheritance.class).type().equals(InheritanceType.SAME_TABLE)) {
+                // Checking if the super class entity is annotated with @DiscriminatorColumn
+                if (!entityClass.isAnnotationPresent(DiscriminatorValue.class)) {
+                    throw new UnsupportedOperationException("The entity " + superClass.getSimpleName()
+                            + " is not annotated with @DiscriminatorValue. SAME_TABLE inheritance needs this annotation to be able to work with this entity.");
+                }
+                columnValue.append("'" + entityClass.getAnnotation(DiscriminatorValue.class).value() + "', ");
+            }
+        }
+        columnValue.delete(columnValue.length() - 2, columnValue.length());
+        columnValue.append(")");
+
+        return columnValue.toString();
     }
 }

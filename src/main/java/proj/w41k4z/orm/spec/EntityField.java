@@ -3,6 +3,9 @@ package proj.w41k4z.orm.spec;
 import java.lang.reflect.Field;
 
 import proj.w41k4z.orm.annotation.Column;
+import proj.w41k4z.orm.annotation.relationship.Key;
+import proj.w41k4z.orm.annotation.relationship.ManyToOne;
+import proj.w41k4z.orm.annotation.relationship.OneToOne;
 
 /**
  * {@code EntityField} is a class used to store information about an entity
@@ -12,7 +15,6 @@ public class EntityField {
 
     private Field field;
     private Class<?> entityClass;
-    private String fieldName;
 
     /**
      * Default constructor, only used by the {@code EntityManager} class (Important
@@ -24,7 +26,6 @@ public class EntityField {
     protected EntityField(Field field, Class<?> entityClass) {
         this.field = field;
         this.entityClass = entityClass;
-        this.fieldName = field.getName();
     }
 
     /**
@@ -46,21 +47,13 @@ public class EntityField {
     }
 
     /**
-     * Get the field name
-     * 
-     * @return the field name
-     */
-    public String getFieldName() {
-        return this.fieldName;
-    }
-
-    /**
      * Get the column name
      * 
      * @return the column name
      */
     public String getColumnName() {
-        return getColumnName(this.field);
+        return this.field.isAnnotationPresent(Key.class) ? this.field.getAnnotation(Key.class).column()
+                : getColumnName(this.field);
     }
 
     /**
@@ -99,5 +92,38 @@ public class EntityField {
         }
         return field.getAnnotation(Column.class).name().equals("") ? field.getName()
                 : field.getAnnotation(Column.class).name();
+    }
+
+    /**
+     * Check if this column field is nullable.
+     * 
+     * @param field the field
+     * @return the column name
+     */
+    public static boolean isNullable(Field field) {
+        if (!field.isAnnotationPresent(Column.class)) {
+            throw new IllegalArgumentException(
+                    "The field " + field.getName()
+                            + " is not a column. Do not forget to annotate it with @Column. Source: "
+                            + field.getDeclaringClass().getSimpleName());
+        }
+        return field.getAnnotation(Column.class).nullable();
+    }
+
+    /**
+     * Check if this field is a related entity field.
+     * 
+     * @param field the field
+     * @return the column name
+     */
+    public static boolean isRelatedEntityField(Field field) {
+        if (field.isAnnotationPresent(OneToOne.class) || field.isAnnotationPresent(ManyToOne.class)) {
+            if (!field.isAnnotationPresent(Key.class)) {
+                throw new UnsupportedOperationException("The field " + field.getName()
+                        + " is missing the @Key annotation. Source: " + field.getDeclaringClass().getSimpleName());
+            }
+            return true;
+        }
+        return false;
     }
 }

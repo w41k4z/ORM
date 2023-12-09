@@ -10,6 +10,7 @@ import proj.w41k4z.orm.annotation.Entity;
 import proj.w41k4z.orm.annotation.Id;
 import proj.w41k4z.orm.annotation.relationship.Inheritance;
 import proj.w41k4z.orm.annotation.relationship.ManyToMany;
+import proj.w41k4z.orm.annotation.relationship.ManyToOne;
 import proj.w41k4z.orm.annotation.relationship.OneToMany;
 import proj.w41k4z.orm.annotation.relationship.OneToOne;
 import proj.w41k4z.orm.enumeration.InheritanceType;
@@ -90,15 +91,16 @@ public abstract class EntityAccess {
     }
 
     /**
-     * Get the entity columns with their source entity (Inheritance supported).
+     * Get all the entity column fields with their source entity, with inherited
+     * fields. This exclude fields with a relationship annotation.
      * 
-     * @param entityClass       the entity class
-     * @param columnSourceTable the entity class associated to the column concerned.
-     *                          If null, the entityClass will be used instead
+     * @param entityClass  the entity class
+     * @param sourceEntity the entity class associated to the field concerned.
+     *                     If null, the entityClass will be used instead
      * 
-     * @return the entity columns
+     * @return the entity column fields
      */
-    public static EntityField[] getColumns(Class<?> entityClass, Class<?> columnSourceTable) {
+    public static EntityField[] getAllEntityFields(Class<?> entityClass, Class<?> sourceEntity) {
         check(entityClass);
 
         // If the entity class has a super class and it is an entity
@@ -113,16 +115,15 @@ public abstract class EntityAccess {
                  * table/entity
                  */
                 case JOINED_TABLE:
-                    superFields = getColumns(entityClass.getSuperclass(), null);
+                    superFields = getAllEntityFields(entityClass.getSuperclass(), null);
                     break;
                 /*
                  * Otherwise, the current class is the column source entity of the super class
                  */
                 default:
-                    superFields = getColumns(entityClass.getSuperclass(), entityClass);
+                    superFields = getAllEntityFields(entityClass.getSuperclass(), entityClass);
                     break;
             }
-
             /*
              * Column source table of an inheritance type of SAME_TABLE is a bit specific
              * because the entity information is stored in the super class.
@@ -147,10 +148,50 @@ public abstract class EntityAccess {
             Arrays.stream(JavaClass.getFieldByAnnotation(entityClass, Column.class))
                     .forEach(field -> {
                         entityFields.add(
-                                new EntityField(field, columnSourceTable == null ? entityClass : columnSourceTable));
+                                new EntityField(field, sourceEntity == null ? entityClass : sourceEntity));
                     });
             return entityFields.toArray(new EntityField[0]);
         }
+    }
+
+    /**
+     * Get the entity column fields. The difference with the
+     * {@link EntityAccess#getAllEntityFields(Class, Class)
+     * getAllEntityFields(Class, Class)} is that it may exclude some inherited
+     * column fields according to the inheritance type occuring. And also, this
+     * include fields with relationship annotation.
+     * 
+     * @param entityClass the entity class
+     * 
+     * @return the entity column fields
+     */
+    public static EntityField[] getEntityFields(Class<?> entityClass) {
+        check(entityClass);
+
+        Class<?> superClass = entityClass.getSuperclass();
+        ArrayList<EntityField> entityFields = new ArrayList<>();
+        // Checking the inheritance type in case of a super class
+        if (superClass.isAnnotationPresent(Inheritance.class)) {
+            InheritanceType inheritanceType = superClass.getAnnotation(Inheritance.class).type();
+            // Inherited columns of type JOINED_TABLE are excluded
+            if (inheritanceType.equals(InheritanceType.DIFFERENT_TABLE)
+                    || inheritanceType.equals(InheritanceType.SAME_TABLE)) {
+                EntityField[] inheritedEntityFields = getEntityFields(superClass);
+                Arrays.stream(inheritedEntityFields)
+                        .forEach(entityField -> {
+                            entityFields.add(
+                                    new EntityField(entityField.getField(), entityClass));
+                        });
+            }
+        }
+        // Only a relationship of type OneToOne or ManyToOne are concerned
+        Arrays.stream(
+                JavaClass.getFieldByAnnotation(entityClass, Column.class, OneToOne.class, ManyToOne.class))
+                .forEach(field -> {
+                    entityFields.add(
+                            new EntityField(field, entityClass));
+                });
+        return entityFields.toArray(new EntityField[0]);
     }
 
     /**
@@ -161,12 +202,12 @@ public abstract class EntityAccess {
      * @param entityClass the entity class
      * @return the related children
      */
-    public static EntityChild[] getRelatedChildren(Class<?> entityClass) {
+    public static EntityChild[] getRelatedEntityChildren(Class<?> entityClass) {
         check(entityClass);
 
         EntityChild[] inheritedEntityChildren = !entityClass.getSuperclass().equals(Object.class)
                 && entityClass.getSuperclass().isAnnotationPresent(Inheritance.class)
-                        ? getRelatedChildren(entityClass.getSuperclass())
+                        ? getRelatedEntityChildren(entityClass.getSuperclass())
                         : new EntityChild[0];
 
         Field[] children = JavaClass.getFieldByAnnotation(entityClass, OneToOne.class, OneToMany.class,
@@ -217,5 +258,11 @@ public abstract class EntityAccess {
         }
 
         return entityClasses.toArray(new Class<?>[0]);
+    }
+
+    public static EntityMetadata getEntityMetadata(Class<?> entityClass) {
+        check(entityClass);
+
+        return new EntityMetadata(entityClass);
     }
 }

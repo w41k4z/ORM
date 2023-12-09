@@ -4,7 +4,8 @@ import java.lang.reflect.Field;
 import proj.w41k4z.orm.annotation.relationship.Key;
 
 /**
- * This class is a representation of an entity child (with relationship).
+ * This class is a representation of an entity child (with relationship
+ * annotation: {@link OneToOne}, {@link ManyToOne} ).
  */
 public class EntityChild {
 

@@ -19,4 +19,11 @@ public @interface Column {
      * @return String the column name
      */
     String name() default "";
+
+    /**
+     * Tells if the column can have NULL value
+     * 
+     * @return a boolean telling nullable or not
+     */
+    boolean nullable() default false;
 }
