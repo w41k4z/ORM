@@ -61,6 +61,12 @@ public class OQL {
             case ADD:
                 return new NativeQueryBuilder(
                         this.objectQuery.toString().replaceAll("ADD", "INSERT").replaceAll("TO", "INTO"));
+            case CHANGE:
+                return new NativeQueryBuilder(
+                        this.objectQuery.toString().replaceAll("CHANGE", "UPDATE").replaceAll("REPLACE", "SET"));
+            case REMOVE:
+                return new NativeQueryBuilder(
+                        this.objectQuery.toString().replaceAll("REMOVE", "DELETE"));
             default:
                 return null;
         }
@@ -85,8 +91,12 @@ public class OQL {
             case ADD:
                 this.buildADDQuery();
                 break;
-            default:
-                throw new UnsupportedOperationException("Unimplemented code.");
+            case CHANGE:
+                this.buildCHANGEQuery();
+                break;
+            case REMOVE:
+                this.buildREMOVEQuery();
+                break;
         }
     }
 
@@ -112,10 +122,46 @@ public class OQL {
      */
     private void buildADDQuery()
             throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        // target column clause
+        // perimeter clause
         this.objectQuery.append("TO " + this.entityMetadata.getTableName());
+        // target column clause
         this.objectQuery.append(this.ADDColumnTarget());
+        // value clause
         this.objectQuery.append(" VALUES " + this.ADDColumnValue());
+    }
+
+    /**
+     * This method build a CHANGE query
+     * 
+     * @throws NoSuchMethodException     if the getter method is not found
+     * @throws IllegalAccessException    if the getter method is not accessible
+     * @throws IllegalArgumentException  if the getter method is not accessible
+     * @throws InvocationTargetException if the getter method is not accessible
+     */
+    private void buildCHANGEQuery()
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        // target column clause
+        this.objectQuery.append(this.entityMetadata.getTableName());
+        // paired column value clause
+        this.objectQuery.append(" REPLACE " + this.CHANGEPairedColumnValue());
+        // restriction clause
+        this.objectQuery.append(this.MQRestrictionClause());
+    }
+
+    /**
+     * This method build a REMOVE query
+     * 
+     * @throws NoSuchMethodException     if the getter method is not found
+     * @throws IllegalAccessException    if the getter method is not accessible
+     * @throws IllegalArgumentException  if the getter method is not accessible
+     * @throws InvocationTargetException if the getter method is not accessible
+     */
+    private void buildREMOVEQuery()
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        // perimeter clause
+        this.objectQuery.append("FROM " + this.entityMetadata.getTableName());
+        // restriction clause
+        this.objectQuery.append(this.MQRestrictionClause());
     }
 
     /**
@@ -314,6 +360,11 @@ public class OQL {
                 }
             }
 
+            if (!EntityField.isNullable(column.getField()) && value.equals("NULL")) {
+                throw new UnsupportedOperationException("The field " + column.getField().getName()
+                        + " is not nullable. You can't set it to null.");
+            }
+
             columnValue.append(value + ", ");
         }
         // Only occurs on SAME_TABLE inheritance type
@@ -333,5 +384,105 @@ public class OQL {
         columnValue.append(")");
 
         return columnValue.toString();
+    }
+
+    /**
+     * This method returns the paired column value. Only used with CHANGE QueryType
+     * 
+     * @return a String concatenated of all concerned column value
+     * @throws NoSuchMethodException     if the getter method is not found
+     * @throws IllegalAccessException    if the getter method is not accessible
+     * @throws IllegalArgumentException  if the getter method is not accessible
+     * @throws InvocationTargetException if the getter method is not accessible
+     */
+    private String CHANGEPairedColumnValue() throws NoSuchMethodException, IllegalAccessException,
+            IllegalArgumentException, InvocationTargetException {
+        StringBuilder pairedColumnValue = new StringBuilder();
+        EntityField id = EntityAccess.getId(this.entityMetadata.getEntityClass());
+
+        for (EntityField column : this.entityMetadata.getEntityFields()) {
+            if (column.getField().getName().equals(id.getField().getName())) {
+                continue;
+            }
+
+            Object fieldValue = null;
+            if (EntityField.isRelatedEntityField(column.getField())) {
+                Object relatedEntityFieldValue = JavaClass.getObjectFieldValue(this.entity, column.getField());
+                fieldValue = relatedEntityFieldValue == null ? null
+                        : JavaClass.getObjectFieldValue(relatedEntityFieldValue,
+                                EntityAccess.getId(column.getEntityClass()).getField());
+            } else {
+                fieldValue = JavaClass.getObjectFieldValue(this.entity, column.getField());
+            }
+
+            // NULL value is wether ignored or throw an exception
+            if (fieldValue == null && !EntityField.isNullable(column.getField())) {
+                throw new UnsupportedOperationException("The field " + column.getField().getName()
+                        + " is not nullable. You can't set it to null.");
+            } else if (fieldValue != null) {
+                String value = "?";
+                switch (column.getField().getType().getSimpleName()) {
+                    case "Timestamp":
+                        value = this.dialect.formatDate((java.sql.Timestamp) fieldValue);
+                        break;
+                    case "Date":
+                        value = this.dialect.formatDate((java.sql.Date) fieldValue);
+                        break;
+                    case "Time":
+                        value = this.dialect.formatDate((java.sql.Time) fieldValue);
+                        break;
+                    case "Boolean":
+                        value = this.dialect.formatBoolean((Boolean) fieldValue);
+                        break;
+                    default:
+                        value = this.dialect.formatNumber((Number) fieldValue);
+                        break;
+                }
+                pairedColumnValue.append(column.getColumnName() + " = " + value + ", ");
+            }
+        }
+        if (pairedColumnValue.toString().endsWith(", ")) {
+            pairedColumnValue.delete(pairedColumnValue.length() - 2, pairedColumnValue.length());
+        }
+        return pairedColumnValue.toString();
+    }
+
+    /**
+     * This method returns the CHANGE query restriction clause.
+     * 
+     * @return a String concatenated of the restriction
+     * @throws NoSuchMethodException     if the getter method is not found
+     * @throws IllegalAccessException    if the getter method is not accessible
+     * @throws IllegalArgumentException  if the getter method is not accessible
+     * @throws InvocationTargetException if the getter method is not accessible
+     */
+    private String MQRestrictionClause()
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        EntityField id = EntityAccess.getId(this.entity.getClass());
+        Object idValue = JavaClass.getObjectFieldValue(this.entity, id.getField());
+        if (idValue == null) {
+            throw new UnsupportedOperationException("The field " + id.getField().getName()
+                    + " is null. You can't update an entity with a null id.");
+        }
+        String value = "?";
+        switch (id.getField().getType().getSimpleName()) {
+            case "Timestamp":
+                value = this.dialect.formatDate((java.sql.Timestamp) idValue);
+                break;
+            case "Date":
+                value = this.dialect.formatDate((java.sql.Date) idValue);
+                break;
+            case "Time":
+                value = this.dialect.formatDate((java.sql.Time) idValue);
+                break;
+            case "Boolean":
+                value = this.dialect.formatBoolean((Boolean) idValue);
+                break;
+            default:
+                value = this.dialect.formatNumber((Number) idValue);
+                break;
+        }
+
+        return " WHERE " + EntityAccess.getId(this.entity.getClass()).getColumnName() + " = " + value;
     }
 }

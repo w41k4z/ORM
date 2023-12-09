@@ -19,4 +19,11 @@ public @interface Key {
      * @return the column to JOIN on
      */
     String column();
+
+    /**
+     * Tells if the column can have NULL value
+     * 
+     * @return a boolean telling nullable or not
+     */
+    boolean nullable() default false;
 }

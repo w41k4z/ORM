@@ -132,7 +132,7 @@ public abstract class EntityAccess {
                     ? entityClass.getSuperclass()
                     : entityClass;
             ArrayList<EntityField> fields = new ArrayList<>();
-            Arrays.stream(JavaClass.getFieldByAnnotation(entityClass, Column.class))
+            Arrays.stream(JavaClass.getFieldByAnnotation(entityClass, Id.class, Column.class))
                     .forEach(field -> {
                         fields.add(
                                 new EntityField(field, currentColumnSourceTable));
@@ -145,7 +145,7 @@ public abstract class EntityAccess {
             return allFields;
         } else {
             ArrayList<EntityField> entityFields = new ArrayList<>();
-            Arrays.stream(JavaClass.getFieldByAnnotation(entityClass, Column.class))
+            Arrays.stream(JavaClass.getFieldByAnnotation(entityClass, Id.class, Column.class))
                     .forEach(field -> {
                         entityFields.add(
                                 new EntityField(field, sourceEntity == null ? entityClass : sourceEntity));
@@ -186,7 +186,7 @@ public abstract class EntityAccess {
         }
         // Only a relationship of type OneToOne or ManyToOne are concerned
         Arrays.stream(
-                JavaClass.getFieldByAnnotation(entityClass, Column.class, OneToOne.class, ManyToOne.class))
+                JavaClass.getFieldByAnnotation(entityClass, Id.class, Column.class, OneToOne.class, ManyToOne.class))
                 .forEach(field -> {
                     entityFields.add(
                             new EntityField(field, entityClass));

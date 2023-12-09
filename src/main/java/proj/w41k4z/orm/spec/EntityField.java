@@ -85,7 +85,7 @@ public class EntityField {
      */
     public static String getColumnName(Field field) {
         if (!field.isAnnotationPresent(Column.class)) {
-            throw new IllegalArgumentException(
+            throw new UnsupportedOperationException(
                     "The field " + field.getName()
                             + " is not a column. Do not forget to annotate it with @Column. Source: "
                             + field.getDeclaringClass().getSimpleName());
@@ -101,6 +101,9 @@ public class EntityField {
      * @return the column name
      */
     public static boolean isNullable(Field field) {
+        if (isRelatedEntityField(field)) {
+            return field.getAnnotation(Key.class).nullable();
+        }
         if (!field.isAnnotationPresent(Column.class)) {
             throw new IllegalArgumentException(
                     "The field " + field.getName()

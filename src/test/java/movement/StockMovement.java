@@ -13,16 +13,18 @@ import proj.w41k4z.orm.annotation.Column;
 @Entity
 @Inheritance(type = InheritanceType.DIFFERENT_TABLE)
 public abstract class StockMovement {
+
     @Id
+    @Column
     private Long id;
 
     @OneToOne
-    @Key(column = "article_code")
+    @Key(column = "article_code", nullable = true)
     private Article article;
 
     private Double quantity;
 
-    @Column(name = "action_date")
+    @Column(name = "action_date", nullable = true)
     private Timestamp actionDate;
 
     public Long getId() {

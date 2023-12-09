@@ -11,16 +11,4 @@ import proj.w41k4z.orm.enumeration.InheritanceType;
 @Inheritance(type = InheritanceType.SAME_TABLE)
 @DiscriminatorColumn("action_type")
 public abstract class ValidatedStockTransaction extends StockMovement {
-
-    @Id
-    @Column
-    private Long id;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long stockMovementId) {
-        this.id = stockMovementId;
-    }
 }
