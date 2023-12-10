@@ -39,18 +39,18 @@ public final class OrmConfiguration {
     /**
      * The default property name of the database URL from the configuration file
      */
-    public static final String CONFIG_DEFAULT_DB_URL_PROPERTY = "database.url";
+    public static final String CONFIG_DEFAULT_DB_URL_PROPERTY = "primary.database.url";
 
     /**
      * The default property name of the database username from the configuration
      * file
      */
-    public static final String CONFIG_DEFAULT_DB_USER_PROPERTY = "database.userName";
+    public static final String CONFIG_DEFAULT_DB_USER_PROPERTY = "primary.database.userName";
 
     /**
      * The default property name of the database password from the configuration
      */
-    public static final String CONFIG_DEFAULT_DB_PASSWORD_PROPERTY = "database.password";
+    public static final String CONFIG_DEFAULT_DB_PASSWORD_PROPERTY = "primary.database.password";
 
     /**
      * The property name of the custom DataSource implementation from the

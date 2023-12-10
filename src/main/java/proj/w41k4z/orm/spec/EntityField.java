@@ -57,6 +57,16 @@ public class EntityField {
     }
 
     /**
+     * Get the alias column name
+     * 
+     * @return the alias column name
+     */
+    public String getAliasColumnName() {
+        String tableName = this.getTableName();
+        return getColumnName(this.field) + "__of__" + tableName;
+    }
+
+    /**
      * Get the table name of this field
      * 
      * @return the table name
@@ -74,7 +84,7 @@ public class EntityField {
     public String getFullColumnName() {
         String tableName = this.getTableName();
         String columnName = this.getColumnName();
-        return tableName.concat(".").concat(columnName).concat(" AS " + columnName + "__of__" + tableName);
+        return tableName.concat(".").concat(columnName).concat(" AS " + getAliasColumnName());
     }
 
     /**
@@ -86,9 +96,9 @@ public class EntityField {
     public static String getColumnName(Field field) {
         if (!field.isAnnotationPresent(Column.class)) {
             throw new UnsupportedOperationException(
-                    "The field " + field.getName()
-                            + " is not a column. Do not forget to annotate it with @Column. Source: "
-                            + field.getDeclaringClass().getSimpleName());
+                    "The field `" + field.getName()
+                            + "` is not a column. Do not forget to annotate it with @Column. Source: `"
+                            + field.getDeclaringClass().getSimpleName() + "`");
         }
         return field.getAnnotation(Column.class).name().equals("") ? field.getName()
                 : field.getAnnotation(Column.class).name();
@@ -106,9 +116,9 @@ public class EntityField {
         }
         if (!field.isAnnotationPresent(Column.class)) {
             throw new IllegalArgumentException(
-                    "The field " + field.getName()
-                            + " is not a column. Do not forget to annotate it with @Column. Source: "
-                            + field.getDeclaringClass().getSimpleName());
+                    "The field `" + field.getName()
+                            + "` is not a column. Do not forget to annotate it with @Column. Source: `"
+                            + field.getDeclaringClass().getSimpleName() + "`");
         }
         return field.getAnnotation(Column.class).nullable();
     }
@@ -122,8 +132,9 @@ public class EntityField {
     public static boolean isRelatedEntityField(Field field) {
         if (field.isAnnotationPresent(OneToOne.class) || field.isAnnotationPresent(ManyToOne.class)) {
             if (!field.isAnnotationPresent(Key.class)) {
-                throw new UnsupportedOperationException("The field " + field.getName()
-                        + " is missing the @Key annotation. Source: " + field.getDeclaringClass().getSimpleName());
+                throw new UnsupportedOperationException("The field `" + field.getName()
+                        + "` is missing the @Key annotation. Source: `" + field.getDeclaringClass().getSimpleName()
+                        + "`");
             }
             return true;
         }

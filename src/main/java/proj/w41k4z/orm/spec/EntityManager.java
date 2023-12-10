@@ -1,13 +1,20 @@
 package proj.w41k4z.orm.spec;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import proj.w41k4z.orm.DataAccessObject;
 import proj.w41k4z.orm.OrmConfiguration;
 import proj.w41k4z.orm.database.DatabaseConnection;
+import proj.w41k4z.orm.database.QueryExecutor;
 import proj.w41k4z.orm.database.Transaction;
+import proj.w41k4z.orm.database.query.OQL;
+import proj.w41k4z.orm.database.query.QueryType;
+import proj.w41k4z.orm.database.request.NativeQueryBuilder;
 
 /**
  * The {@code EntityManager} is used to manage entity persistence and
@@ -111,9 +118,24 @@ public class EntityManager<E, ID> implements DataAccessObject<E, ID> {
     }
 
     @Override
-    public E[] findAll() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findAll'");
+    @SuppressWarnings("unchecked")
+    public E[] findAll()
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+            SQLException, InstantiationException, SecurityException {
+        OQL objectQueryLanguage = new OQL(QueryType.GET, this.entity,
+                this.transaction.getCurrentDatabaseConnection().getDataSource().getDialect());
+        NativeQueryBuilder nativeQueryBuilder = objectQueryLanguage.toNativeQuery();
+        QueryExecutor queryExecutor = new QueryExecutor();
+        Statement statement = this.transaction.getCurrentDatabaseConnection().getConnection().createStatement();
+        Object[] result = EntityMapping.map(
+                (ResultSet) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(), statement),
+                getClass());
+        statement.close();
+        E[] entities = (E[]) Array.newInstance(this.entity.getClass(), result.length);
+        for (int i = 0; i < result.length; i++) {
+            entities[i] = (E) result[i];
+        }
+        return entities;
     }
 
     @Override

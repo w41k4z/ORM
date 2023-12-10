@@ -40,8 +40,8 @@ public abstract class EntityAccess {
     public static void check(Class<?> entityClass) {
         if (!isEntity(entityClass)) {
             throw new IllegalArgumentException(
-                    "The class " + entityClass.getSimpleName()
-                            + " is not an entity. Do not forget to annotate it with @Entity.");
+                    "The class `" + entityClass.getSimpleName()
+                            + "` is not an entity. Do not forget to annotate it with @Entity.");
         }
     }
 
@@ -75,18 +75,18 @@ public abstract class EntityAccess {
                     return getId(superClass);
                 else
                     throw new IllegalArgumentException(
-                            "The entity " + entityClass.getSimpleName()
-                                    + " must have one field annotated with @Id. If it has an entity super class, check the @Id column.");
+                            "The entity `" + entityClass.getSimpleName()
+                                    + "` must have one field annotated with @Id. If it has an entity super class, check the @Id column.");
             case 1:
                 if (ids[0].isAnnotationPresent(Column.class)) {
                     return new EntityField(ids[0], entityClass);
                 }
                 throw new UnsupportedOperationException(
-                        "An id field annotated with @Id must be annotated with the annotation @Column too. Source: "
-                                + entityClass.getSimpleName() + ". Id field: " + ids[0].getName());
+                        "An id field annotated with @Id must be annotated with the annotation @Column too. Source: `"
+                                + entityClass.getSimpleName() + "`. Id field: `" + ids[0].getName() + "`.");
             default:
-                throw new IllegalArgumentException("The entity " + entityClass.getSimpleName()
-                        + " must have only one field annotated with @Id.");
+                throw new IllegalArgumentException("The entity `" + entityClass.getSimpleName()
+                        + "` must have only one field annotated with @Id.");
         }
     }
 
@@ -160,6 +160,8 @@ public abstract class EntityAccess {
      * getAllEntityFields(Class, Class)} is that it may exclude some inherited
      * column fields according to the inheritance type occuring. And also, this
      * include fields with relationship annotation.
+     * To be simple, these are the fields that will be used when inserting or
+     * updating an entity.
      * 
      * @param entityClass the entity class
      * 
@@ -210,7 +212,7 @@ public abstract class EntityAccess {
                         ? getRelatedEntityChildren(entityClass.getSuperclass())
                         : new EntityChild[0];
 
-        Field[] children = JavaClass.getFieldByAnnotation(entityClass, OneToOne.class, OneToMany.class,
+        Field[] children = JavaClass.getFieldByAnnotation(entityClass, OneToOne.class, OneToMany.class, ManyToOne.class,
                 ManyToMany.class);
         EntityChild[] entityChildren = new EntityChild[children.length + inheritedEntityChildren.length];
         for (int i = 0; i < children.length; i++) {

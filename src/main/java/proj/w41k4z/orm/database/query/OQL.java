@@ -20,7 +20,9 @@ import proj.w41k4z.orm.spec.EntityMetadata;
  * specially for entity object.
  * As we all know, it is difficult to query directly on the target table when
  * dealing with relationship and inheritance. The purpose of this class is to
- * simplify and solve this kind of problem
+ * simplify and solve this kind of problem.
+ * 
+ * EAGER loading is intentionally not supported.
  */
 public class OQL {
 
@@ -264,13 +266,13 @@ public class OQL {
             if (superClass.getAnnotation(Inheritance.class).type().equals(InheritanceType.SAME_TABLE)) {
                 // Checking if the super class entity is annotated with @DiscriminatorColumn
                 if (!superClass.isAnnotationPresent(DiscriminatorColumn.class)) {
-                    throw new UnsupportedOperationException("The entity " + superClass.getSimpleName()
-                            + " is not annotated with @DiscriminatorColumn. SAME_TABLE inheritance needs this annotation.");
+                    throw new UnsupportedOperationException("The entity `" + superClass.getSimpleName()
+                            + "` is not annotated with @DiscriminatorColumn. SAME_TABLE inheritance needs this annotation.");
                 }
                 // Checking if the entity is annotated with @DiscriminatorValue
                 if (!entityClass.isAnnotationPresent(DiscriminatorValue.class)) {
-                    throw new UnsupportedOperationException("The entity " + entityClass.getSimpleName()
-                            + " is not annotated with @DiscriminatorValue. SAME_TABLE inheritance needs this annotation to be able to work with this entity.");
+                    throw new UnsupportedOperationException("The entity `" + entityClass.getSimpleName()
+                            + "` is not annotated with @DiscriminatorValue. SAME_TABLE inheritance needs this annotation to be able to work with this entity.");
                 }
                 String discriminatorColumnName = superClass.getAnnotation(DiscriminatorColumn.class).value();
                 String discriminatorColumnValue = entityClass.getAnnotation(DiscriminatorValue.class).value();
@@ -303,8 +305,8 @@ public class OQL {
             if (superClass.getAnnotation(Inheritance.class).type().equals(InheritanceType.SAME_TABLE)) {
                 // Checking if the super class entity is annotated with @DiscriminatorColumn
                 if (!superClass.isAnnotationPresent(DiscriminatorColumn.class)) {
-                    throw new UnsupportedOperationException("The entity " + superClass.getSimpleName()
-                            + " is not annotated with @DiscriminatorColumn. SAME_TABLE inheritance needs this annotation.");
+                    throw new UnsupportedOperationException("The entity `" + superClass.getSimpleName()
+                            + "` is not annotated with @DiscriminatorColumn. SAME_TABLE inheritance needs this annotation.");
                 }
                 columnTarget.append(superClass.getAnnotation(DiscriminatorColumn.class).value() + ", ");
             }
@@ -361,8 +363,8 @@ public class OQL {
             }
 
             if (!EntityField.isNullable(column.getField()) && value.equals("NULL")) {
-                throw new UnsupportedOperationException("The field " + column.getField().getName()
-                        + " is not nullable. You can't set it to null.");
+                throw new UnsupportedOperationException("The field `" + column.getField().getName()
+                        + "` is not nullable. You can't set it to null.");
             }
 
             columnValue.append(value + ", ");
@@ -374,8 +376,8 @@ public class OQL {
             if (superClass.getAnnotation(Inheritance.class).type().equals(InheritanceType.SAME_TABLE)) {
                 // Checking if the super class entity is annotated with @DiscriminatorColumn
                 if (!entityClass.isAnnotationPresent(DiscriminatorValue.class)) {
-                    throw new UnsupportedOperationException("The entity " + superClass.getSimpleName()
-                            + " is not annotated with @DiscriminatorValue. SAME_TABLE inheritance needs this annotation to be able to work with this entity.");
+                    throw new UnsupportedOperationException("The entity `" + superClass.getSimpleName()
+                            + "` is not annotated with @DiscriminatorValue. SAME_TABLE inheritance needs this annotation to be able to work with this entity.");
                 }
                 columnValue.append("'" + entityClass.getAnnotation(DiscriminatorValue.class).value() + "', ");
             }
@@ -415,11 +417,10 @@ public class OQL {
                 fieldValue = JavaClass.getObjectFieldValue(this.entity, column.getField());
             }
 
-            // NULL value is wether ignored or throw an exception
-            if (fieldValue == null && !EntityField.isNullable(column.getField())) {
-                throw new UnsupportedOperationException("The field " + column.getField().getName()
-                        + " is not nullable. You can't set it to null.");
-            } else if (fieldValue != null) {
+            // NULL value are ignored
+            if (fieldValue == null) {
+                continue;
+            } else {
                 String value = "?";
                 switch (column.getField().getType().getSimpleName()) {
                     case "Timestamp":
@@ -461,8 +462,8 @@ public class OQL {
         EntityField id = EntityAccess.getId(this.entity.getClass());
         Object idValue = JavaClass.getObjectFieldValue(this.entity, id.getField());
         if (idValue == null) {
-            throw new UnsupportedOperationException("The field " + id.getField().getName()
-                    + " is null. You can't update an entity with a null id.");
+            throw new UnsupportedOperationException("The field `" + id.getField().getName()
+                    + "` is null. You can't do changes on an entity with a null id.");
         }
         String value = "?";
         switch (id.getField().getType().getSimpleName()) {

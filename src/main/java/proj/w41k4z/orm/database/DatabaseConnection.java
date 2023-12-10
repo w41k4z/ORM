@@ -10,19 +10,42 @@ import java.sql.SQLException;
  */
 public class DatabaseConnection {
 
+    private String connectionName;
     private DataSource dataSource;
     private Connection connection;
 
     /**
-     * Default constructor
+     * Default constructor with connection name as "default"
      * 
      * @param dataSource the DataSource of the connection
      * @throws SQLException if the connection to the database failed
      */
     public DatabaseConnection(DataSource dataSource) throws SQLException {
+        this(dataSource, "default");
+    }
+
+    /**
+     * Constructor with a connection name
+     * 
+     * @param dataSource     the DataSource of the connection
+     * @param connectionName the name of the connection
+     * @throws SQLException if the connection to the database failed
+     */
+    public DatabaseConnection(DataSource dataSource, String connectionName) throws SQLException {
+        this.connectionName = connectionName;
         this.dataSource = dataSource;
         this.connection = DriverManager.getConnection(dataSource.getUrl(), dataSource.getUserName(),
                 dataSource.getPassword());
+        this.connection.setAutoCommit(false);
+    }
+
+    /**
+     * This method is used to get the connection name.
+     * 
+     * @return String The connection name
+     */
+    public String getConnectionName() {
+        return connectionName;
     }
 
     /**

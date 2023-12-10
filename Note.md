@@ -1,9 +1,3 @@
-# OQL
-
-    - ADD query
-    - UPDATE query
-    - DELETE query
-
 # QueryExecutor
 
     - executeDMR (Data Manipulation Request)
@@ -14,7 +8,6 @@
     - One to Many
     - Many to Many
       - Many to One (--optional)
-
 
 ### New feature
 
