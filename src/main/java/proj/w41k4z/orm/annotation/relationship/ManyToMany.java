@@ -6,7 +6,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * This annotation is used to indicate a Many to Many relationship.
+ * This annotation is used to indicate a Many to Many relationship. Must be used
+ * on an array field and with the
+ * {@link Join} annotation.
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)

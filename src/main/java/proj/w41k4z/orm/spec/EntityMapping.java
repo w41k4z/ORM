@@ -10,6 +10,10 @@ import java.util.Map;
 
 import proj.w41k4z.helpers.java.JavaClass;
 
+/**
+ * {@code EntityMapping} is an abstract class used to map the result set to the
+ * entities.
+ */
 public abstract class EntityMapping {
 
     public static Object[] map(ResultSet resultSet, Class<?> type)

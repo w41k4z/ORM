@@ -136,7 +136,7 @@ public class EntityField {
      * This mainly concerns field annotated with @OneToOne and @ManyToOne
      * 
      * @param field the field
-     * @return the column name
+     * @return true if the field is a related entity field, false otherwise
      */
     public static boolean isRelatedEntityField(Field field) {
         if (field.isAnnotationPresent(OneToOne.class) || field.isAnnotationPresent(ManyToOne.class)) {
@@ -156,8 +156,8 @@ public class EntityField {
      * entity id as a foreign column).
      * This mainly concerns field annotated with @OneToMany and @ManyToMany.
      * 
-     * @param field
-     * @return
+     * @param field the field
+     * @return true if the field is a foreign entity field, false otherwise
      */
     public static boolean isForeignEntityField(Field field) {
         if (field.isAnnotationPresent(OneToMany.class) || field.isAnnotationPresent(ManyToMany.class)) {

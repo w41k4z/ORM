@@ -1,5 +1,8 @@
 package proj.w41k4z.orm.spec;
 
+/**
+ * {@code EntityMetadata} is a class used to store information about an entity.
+ */
 public class EntityMetadata {
 
     private Class<?> entityClass;

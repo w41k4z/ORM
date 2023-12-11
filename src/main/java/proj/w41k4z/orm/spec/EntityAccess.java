@@ -258,7 +258,7 @@ public abstract class EntityAccess {
      * dependencies (parent table to join...)
      * 
      * @param entityClass the entity class
-     * @return
+     * @return the entity classes related to the given entity class
      */
     public static Class<?>[] getRelatedEntityClasses(Class<?> entityClass) {
         check(entityClass);

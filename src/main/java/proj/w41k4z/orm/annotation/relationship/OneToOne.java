@@ -6,7 +6,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * This annotation is used to indicate a One to One relationship.
+ * This annotation is used to indicate a One to One relationship. Must be used
+ * on a field and with the {@link Key} annotation.
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)

@@ -5,8 +5,8 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /**
- * This class is meant to be used by the {@link EntityManager} to communicate
- * with the database.
+ * This class is meant to be used by the
+ * {@link proj.w41k4z.orm.spec.EntityManager} to communicate with the database.
  */
 public class DatabaseConnection {
 

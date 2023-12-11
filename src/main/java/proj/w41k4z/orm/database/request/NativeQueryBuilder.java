@@ -25,6 +25,7 @@ public class NativeQueryBuilder {
      * Constructor for raw SELECT request with Condition
      * 
      * @param rawRequest the raw request
+     * @param condition  the condition to add
      */
     public NativeQueryBuilder(String rawRequest, Condition condition) {
         StringBuilder request = new StringBuilder("SELECT temp.* FROM (" + rawRequest.toString() + ") temp");
@@ -34,12 +35,10 @@ public class NativeQueryBuilder {
     /**
      * Constructor for SELECT request.
      * 
-     * @param type
-     * @param table
-     * @param columns
-     * @param columnValues
-     * @param dialect
-     * @param condition
+     * @param table     the concerned table
+     * @param columns   the concerned columns
+     * @param dialect   the dialect to use
+     * @param condition the condition to add
      */
     public NativeQueryBuilder(String table, String[] columns, Dialect dialect, Condition condition) {
         this.setType(RequestType.SELECT);

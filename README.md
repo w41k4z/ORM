@@ -10,3 +10,8 @@
     - Commit or rollback the transaction
     - Close the statement after the transaction.
     - Close the transaction
+
+## Relationship usage
+
+    - Be aware of the relationship types (Careful when choosing between OneToMany and ManyToMany as quite a few things change)
+    - Read doc

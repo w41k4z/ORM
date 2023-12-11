@@ -8,8 +8,6 @@ import java.lang.annotation.Target;
 /**
  * This annotation is used to specify the value of a discriminator column.
  * Inheritance of type SAME_TABLE child class must have this annotation.
- * 
- * @see {@link DiscriminatorColumn}
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

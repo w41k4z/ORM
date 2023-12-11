@@ -57,7 +57,6 @@ public class Transaction {
     /**
      * Adds a database connection to the transaction
      * 
-     * @param name               the name of the database connection
      * @param databaseConnection the database connection
      */
     public void addDatabaseConnection(DatabaseConnection databaseConnection) {
@@ -70,9 +69,8 @@ public class Transaction {
      * connection but does not commit its transaction.
      * 
      * @param name the name of the database connection
-     * @throws SQLException
      */
-    public void removeDatabaseConnection(String name) throws SQLException {
+    public void removeDatabaseConnection(String name) {
         this.close(name);
         this.databaseConnections.remove(name);
     }
@@ -89,7 +87,7 @@ public class Transaction {
     /**
      * Commits all active database connections in the transaction
      * 
-     * @throws SQLException
+     * @throws SQLException if one of the commit failed
      */
     public void commitAll() throws SQLException {
         for (String databaseConnectionName : this.databaseConnections.keySet()) {
@@ -101,7 +99,7 @@ public class Transaction {
      * Commits an active database connection in the transaction
      * 
      * @param name the name of the database connection
-     * @throws SQLException
+     * @throws SQLException if the commit failed
      */
     public void commit(String name) throws SQLException {
         // only commit if the database connection status is active
@@ -113,7 +111,7 @@ public class Transaction {
     /**
      * Rollbacks all active database connections in the transaction
      * 
-     * @throws SQLException
+     * @throws SQLException if one of the rollback failed
      */
     public void rollbackAll() throws SQLException {
         for (String databaseConnectionName : this.databaseConnections.keySet()) {
@@ -125,7 +123,7 @@ public class Transaction {
      * Rollbacks an active database connection in the transaction
      * 
      * @param name the name of the database connection
-     * @throws SQLException
+     * @throws SQLException if the rollback failed
      */
     public void rollback(String name) throws SQLException {
         // only rollback if the database connection status is active
@@ -136,10 +134,8 @@ public class Transaction {
 
     /**
      * Closes all the database connections in the transaction
-     * 
-     * @throws SQLException
      */
-    public void closeAll() throws SQLException {
+    public void closeAll() {
         for (String databaseConnectionName : this.databaseConnections.keySet()) {
             this.close(databaseConnectionName);
         }
@@ -150,10 +146,13 @@ public class Transaction {
      * connection status is set to inactive and cannot be reopened anymore.
      * 
      * @param name the name of the database connection
-     * @throws SQLException
      */
-    public void close(String name) throws SQLException {
+    public void close(String name) {
         this.databaseConnectionsStatus.replace(name, false);
-        this.databaseConnections.get(name).getConnection().close();
+        try {
+            this.databaseConnections.get(name).getConnection().close();
+        } catch (SQLException e) {
+            // Closing a connection is not a critical operation
+        }
     }
 }
