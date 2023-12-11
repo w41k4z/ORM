@@ -22,6 +22,7 @@ public class Transaction {
      */
     public Transaction(DatabaseConnection databaseConnection) {
         this.databaseConnections = new HashMap<String, DatabaseConnection>();
+        this.databaseConnectionsStatus = new HashMap<String, Boolean>();
         this.addDatabaseConnection(databaseConnection);
         this.start(databaseConnection.getConnectionName());
         this.use(databaseConnection.getConnectionName());

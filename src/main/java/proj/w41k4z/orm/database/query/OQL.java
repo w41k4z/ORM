@@ -6,7 +6,9 @@ import proj.w41k4z.helpers.java.JavaClass;
 import proj.w41k4z.orm.annotation.DiscriminatorColumn;
 import proj.w41k4z.orm.annotation.DiscriminatorValue;
 import proj.w41k4z.orm.annotation.relationship.Inheritance;
+import proj.w41k4z.orm.annotation.relationship.Join;
 import proj.w41k4z.orm.annotation.relationship.Key;
+import proj.w41k4z.orm.annotation.relationship.OneToMany;
 import proj.w41k4z.orm.database.Dialect;
 import proj.w41k4z.orm.database.request.NativeQueryBuilder;
 import proj.w41k4z.orm.enumeration.InheritanceType;
@@ -22,7 +24,7 @@ import proj.w41k4z.orm.spec.EntityMetadata;
  * dealing with relationship and inheritance. The purpose of this class is to
  * simplify and solve this kind of problem.
  * 
- * EAGER loading is intentionally not supported.
+ * EAGER loading is intentionally not supported (Limited to one layer).
  */
 public class OQL {
 
@@ -184,7 +186,7 @@ public class OQL {
         for (EntityChild child : this.entityMetadata.getRelatedEntityChildren()) {
             EntityField[] childColumns = EntityAccess.getAllEntityFields(child.getEntityClass(), null);
             for (EntityField column : childColumns) {
-                columnTarget.append(column.getFullColumnName() + ", ");
+                columnTarget.append(child.getRank() + "_" + column.getFullColumnName() + "_" + child.getRank() + ", ");
             }
         }
         columnTarget.delete(columnTarget.length() - 2, columnTarget.length());
@@ -203,12 +205,12 @@ public class OQL {
 
         Class<?>[] mainEntityClasses = this.entityMetadata.getRelatedEntityClasses();
         String mainTableName = this.entityMetadata.getTableName();
-        String mainTableIdColumnName = EntityAccess.getId(mainEntityClasses[0]).getColumnName();
+        String mainTableIdColumnName = EntityAccess.getId(mainEntityClasses[0], null).getColumnName();
         perimeterClause.append(mainTableName);
         // This part only applies on JOINED_TABLE inheritance type
         for (int i = 1; i < mainEntityClasses.length; i++) {
             String relatedTableName = EntityAccess.getTableName(mainEntityClasses[i]);
-            String relatedTableIdColumnName = EntityAccess.getId(mainEntityClasses[i]).getColumnName();
+            String relatedTableIdColumnName = EntityAccess.getId(mainEntityClasses[i], null).getColumnName();
 
             perimeterClause.append(" LEFT JOIN ");
             perimeterClause.append(relatedTableName);
@@ -222,21 +224,72 @@ public class OQL {
         for (EntityChild child : this.entityMetadata.getRelatedEntityChildren()) {
             Class<?>[] childMainEntityClasses = EntityAccess.getRelatedEntityClasses(child.getEntityClass());
             String childMainTableName = EntityAccess.getTableName(childMainEntityClasses[0]);
+            String childMainTableNameAlias = child.getRank() + "_" + childMainTableName;
+            String childIdColumnName = EntityAccess.getId(child.getEntityClass(), null).getColumnName();
 
-            String childIdColumnName = EntityAccess.getId(child.getEntityClass()).getColumnName();
-            String joinColumnName = child.getField().getAnnotation(Key.class).column();
+            // Operation depends on the relationship type
+            if (EntityField.isRelatedEntityField(child.getField())) {
+                /* Single Object Relationship */
+                String joinColumnName = child.getField().getAnnotation(Key.class).column();
 
-            perimeterClause.append(" LEFT JOIN ");
-            perimeterClause.append(childMainTableName);
-            perimeterClause.append(" ON ");
-            perimeterClause.append(mainTableName + "." + joinColumnName);
-            perimeterClause.append(" = ");
-            perimeterClause.append(childMainTableName + "." + childIdColumnName);
+                perimeterClause.append(" LEFT JOIN ");
+                perimeterClause.append(childMainTableName + " " + childMainTableNameAlias);
+                perimeterClause.append(" ON ");
+                perimeterClause.append(mainTableName + "." + joinColumnName);
+                perimeterClause.append(" = ");
+                perimeterClause.append(childMainTableNameAlias + "." + childIdColumnName);
+            } else {
+                /* Collection Object RelationShip */
+                String joinTableName = child.getField().getAnnotation(Join.class).table();
+                String joinColumnName = child.getField().getAnnotation(Join.class).joinColumn();
+                String inverseJoinColumnName = child.getField().getAnnotation(Join.class).inverseJoinColumn();
+
+                perimeterClause.append(" LEFT JOIN ");
+                if (child.getRelationshipAnnotation().equals(OneToMany.class)) {
+                    // One to many
+                    if (inverseJoinColumnName.equals("")) {
+                        throw new UnsupportedOperationException("The field `" + child.getField().getName()
+                                + "` @Join annotation is missing the inverseJoinColumn attribute. This attribute is mandatory for OneToMany relationship. Source: `"
+                                + child.getField().getDeclaringClass().getSimpleName() + "`");
+                    }
+
+                    perimeterClause.append(childMainTableName + " " + childMainTableNameAlias);
+                    perimeterClause.append(" ON ");
+                    perimeterClause.append(mainTableName + "." + mainTableIdColumnName);
+                    perimeterClause.append(" = ");
+                    perimeterClause.append(childMainTableNameAlias + "." + inverseJoinColumnName);
+                } else {
+                    // Many to many
+                    if (joinTableName.equals("") || joinColumnName.equals("") || inverseJoinColumnName.equals("")) {
+                        throw new UnsupportedOperationException("The field `" + child.getField().getName()
+                                + "` @Join annotation is missing one of the attributes. All the attributes are mandatory for ManyToMany relationship. Source: `"
+                                + child.getField().getDeclaringClass().getSimpleName() + "`");
+                    }
+
+                    // Joining the join table
+                    perimeterClause.append(joinTableName);
+                    perimeterClause.append(" ON ");
+                    perimeterClause.append(mainTableName + "." + mainTableIdColumnName);
+                    perimeterClause.append(" = ");
+                    perimeterClause.append(joinTableName + "." + joinColumnName);
+                    // Joining the child main table
+                    perimeterClause.append(" LEFT JOIN ");
+                    perimeterClause.append(childMainTableName + " " + childMainTableNameAlias);
+                    perimeterClause.append(" ON ");
+                    perimeterClause.append(joinTableName + "." + inverseJoinColumnName);
+                    perimeterClause.append(" = ");
+                    perimeterClause.append(childMainTableNameAlias + "." + childIdColumnName);
+                }
+            }
+            /*
+             * No other option as an EntityChild can only be instantiated wether with a
+             * * @OneToMany, a @ManyToMany, @OneToOne or @ManyToOne annotation.
+             */
 
             // This part only applies on JOINED_TABLE inheritance type
             for (int i = 1; i < childMainEntityClasses.length; i++) {
                 String relatedTableName = EntityAccess.getTableName(childMainEntityClasses[i]);
-                String relatedTableIdColumnName = EntityAccess.getId(childMainEntityClasses[i]).getColumnName();
+                String relatedTableIdColumnName = EntityAccess.getId(childMainEntityClasses[i], null).getColumnName();
 
                 perimeterClause.append(" LEFT JOIN ");
                 perimeterClause.append(relatedTableName);
@@ -336,7 +389,7 @@ public class OQL {
                 Object relatedEntityFieldValue = JavaClass.getObjectFieldValue(this.entity, column.getField());
                 fieldValue = relatedEntityFieldValue == null ? null
                         : JavaClass.getObjectFieldValue(relatedEntityFieldValue,
-                                EntityAccess.getId(column.getEntityClass()).getField());
+                                EntityAccess.getId(column.getEntityClass(), null).getField());
             } else {
                 fieldValue = JavaClass.getObjectFieldValue(this.entity, column.getField());
             }
@@ -344,6 +397,9 @@ public class OQL {
             String value = "NULL";
             if (fieldValue != null) {
                 switch (column.getField().getType().getSimpleName()) {
+                    case "String":
+                        value = this.dialect.formatString(fieldValue.toString());
+                        break;
                     case "Timestamp":
                         value = this.dialect.formatDate((java.sql.Timestamp) fieldValue);
                         break;
@@ -400,7 +456,7 @@ public class OQL {
     private String CHANGEPairedColumnValue() throws NoSuchMethodException, IllegalAccessException,
             IllegalArgumentException, InvocationTargetException {
         StringBuilder pairedColumnValue = new StringBuilder();
-        EntityField id = EntityAccess.getId(this.entityMetadata.getEntityClass());
+        EntityField id = EntityAccess.getId(this.entityMetadata.getEntityClass(), null);
 
         for (EntityField column : this.entityMetadata.getEntityFields()) {
             if (column.getField().getName().equals(id.getField().getName())) {
@@ -412,7 +468,7 @@ public class OQL {
                 Object relatedEntityFieldValue = JavaClass.getObjectFieldValue(this.entity, column.getField());
                 fieldValue = relatedEntityFieldValue == null ? null
                         : JavaClass.getObjectFieldValue(relatedEntityFieldValue,
-                                EntityAccess.getId(column.getEntityClass()).getField());
+                                EntityAccess.getId(column.getEntityClass(), null).getField());
             } else {
                 fieldValue = JavaClass.getObjectFieldValue(this.entity, column.getField());
             }
@@ -423,6 +479,9 @@ public class OQL {
             } else {
                 String value = "?";
                 switch (column.getField().getType().getSimpleName()) {
+                    case "String":
+                        value = this.dialect.formatString(fieldValue.toString());
+                        break;
                     case "Timestamp":
                         value = this.dialect.formatDate((java.sql.Timestamp) fieldValue);
                         break;
@@ -459,7 +518,7 @@ public class OQL {
      */
     private String MQRestrictionClause()
             throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        EntityField id = EntityAccess.getId(this.entity.getClass());
+        EntityField id = EntityAccess.getId(this.entity.getClass(), null);
         Object idValue = JavaClass.getObjectFieldValue(this.entity, id.getField());
         if (idValue == null) {
             throw new UnsupportedOperationException("The field `" + id.getField().getName()
@@ -467,6 +526,9 @@ public class OQL {
         }
         String value = "?";
         switch (id.getField().getType().getSimpleName()) {
+            case "String":
+                value = this.dialect.formatString(idValue.toString());
+                break;
             case "Timestamp":
                 value = this.dialect.formatDate((java.sql.Timestamp) idValue);
                 break;
@@ -484,6 +546,6 @@ public class OQL {
                 break;
         }
 
-        return " WHERE " + EntityAccess.getId(this.entity.getClass()).getColumnName() + " = " + value;
+        return " WHERE " + EntityAccess.getId(this.entity.getClass(), null).getColumnName() + " = " + value;
     }
 }

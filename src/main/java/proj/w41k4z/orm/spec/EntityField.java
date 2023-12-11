@@ -3,8 +3,11 @@ package proj.w41k4z.orm.spec;
 import java.lang.reflect.Field;
 
 import proj.w41k4z.orm.annotation.Column;
+import proj.w41k4z.orm.annotation.relationship.Join;
 import proj.w41k4z.orm.annotation.relationship.Key;
+import proj.w41k4z.orm.annotation.relationship.ManyToMany;
 import proj.w41k4z.orm.annotation.relationship.ManyToOne;
+import proj.w41k4z.orm.annotation.relationship.OneToMany;
 import proj.w41k4z.orm.annotation.relationship.OneToOne;
 
 /**
@@ -111,6 +114,10 @@ public class EntityField {
      * @return the column name
      */
     public static boolean isNullable(Field field) {
+        // Foreign entity field are nullable
+        if (isForeignEntityField(field)) {
+            return true;
+        }
         if (isRelatedEntityField(field)) {
             return field.getAnnotation(Key.class).nullable();
         }
@@ -124,7 +131,9 @@ public class EntityField {
     }
 
     /**
-     * Check if this field is a related entity field.
+     * Check if this field is a related entity field (entity field that is
+     * represented as a foreign column in the database).
+     * This mainly concerns field annotated with @OneToOne and @ManyToOne
      * 
      * @param field the field
      * @return the column name
@@ -134,6 +143,27 @@ public class EntityField {
             if (!field.isAnnotationPresent(Key.class)) {
                 throw new UnsupportedOperationException("The field `" + field.getName()
                         + "` is missing the @Key annotation. Source: `" + field.getDeclaringClass().getSimpleName()
+                        + "`");
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check if this field is a foreign entity field (entity field that is
+     * from a foreign entity having the declaring entity of the given field the
+     * entity id as a foreign column).
+     * This mainly concerns field annotated with @OneToMany and @ManyToMany.
+     * 
+     * @param field
+     * @return
+     */
+    public static boolean isForeignEntityField(Field field) {
+        if (field.isAnnotationPresent(OneToMany.class) || field.isAnnotationPresent(ManyToMany.class)) {
+            if (!field.isAnnotationPresent(Join.class)) {
+                throw new UnsupportedOperationException("The field `" + field.getName()
+                        + "` is missing the @Join annotation. Source: `" + field.getDeclaringClass().getSimpleName()
                         + "`");
             }
             return true;

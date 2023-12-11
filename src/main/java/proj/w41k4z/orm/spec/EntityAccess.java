@@ -59,27 +59,46 @@ public abstract class EntityAccess {
     }
 
     /**
-     * Get the entity Id (Inheritance included)
+     * Get the entity Id (Inheritance supported)
      * 
-     * @param entityClass the entity class
+     * @param entityClass       the entity class
+     * @param sourceEntityClass the entity class associated to the field concerned.
+     *                          If null, the entityClass will be
+     *                          used instead.
      * @return the entity id
      */
-    public static EntityField getId(Class<?> entityClass) {
+    public static EntityField getId(Class<?> entityClass, Class<?> sourceEntityClass) {
         check(entityClass);
 
         Field[] ids = JavaClass.getFieldByAnnotation(entityClass, Id.class);
         switch (ids.length) {
             case 0:
                 Class<?> superClass = entityClass.getSuperclass();
-                if (!superClass.equals(Object.class) && superClass.isAnnotationPresent(Inheritance.class))
-                    return getId(superClass);
-                else
+                if (!superClass.equals(Object.class) && superClass.isAnnotationPresent(Inheritance.class)) {
+                    InheritanceType inheritanceType = entityClass.getSuperclass().getAnnotation(Inheritance.class)
+                            .type();
+                    switch (inheritanceType) {
+                        /*
+                         * If the inheritance type is JOINED_TABLE, the super class is the column
+                         * source entity of the upper fields because the super class is a standalone
+                         * table/entity
+                         */
+                        case JOINED_TABLE:
+                            return getId(superClass, null);
+                        /*
+                         * Otherwise, the current class is the column source entity of the super class
+                         */
+                        default:
+                            return getId(superClass, entityClass);
+                    }
+                } else {
                     throw new IllegalArgumentException(
                             "The entity `" + entityClass.getSimpleName()
                                     + "` must have one field annotated with @Id. If it has an entity super class, check the @Id column.");
+                }
             case 1:
                 if (ids[0].isAnnotationPresent(Column.class)) {
-                    return new EntityField(ids[0], entityClass);
+                    return new EntityField(ids[0], sourceEntityClass == null ? entityClass : sourceEntityClass);
                 }
                 throw new UnsupportedOperationException(
                         "An id field annotated with @Id must be annotated with the annotation @Column too. Source: `"
@@ -92,7 +111,8 @@ public abstract class EntityAccess {
 
     /**
      * Get all the entity column fields with their source entity, with inherited
-     * fields. This exclude fields with a relationship annotation.
+     * fields. This exclude fields with a relationship annotation (Only those
+     * annotated with @Column are taken).
      * 
      * @param entityClass  the entity class
      * @param sourceEntity the entity class associated to the field concerned.
@@ -212,13 +232,17 @@ public abstract class EntityAccess {
                         ? getRelatedEntityChildren(entityClass.getSuperclass())
                         : new EntityChild[0];
 
+        /*
+         * The rank is used to set the rank of the entity child (Useful when a join from
+         * the same entity is occuring)
+         */
+        int rank = inheritedEntityChildren.length;
         Field[] children = JavaClass.getFieldByAnnotation(entityClass, OneToOne.class, OneToMany.class, ManyToOne.class,
                 ManyToMany.class);
         EntityChild[] entityChildren = new EntityChild[children.length + inheritedEntityChildren.length];
         for (int i = 0; i < children.length; i++) {
-            check(
-                    children[i].getType().isArray() ? children[i].getType().getComponentType() : children[i].getType());
-            entityChildren[i] = new EntityChild(children[i]);
+            check(children[i].getType().isArray() ? children[i].getType().getComponentType() : children[i].getType());
+            entityChildren[i] = new EntityChild(children[i], rank++);
         }
         for (int i = children.length; i < entityChildren.length; i++) {
             entityChildren[i] = inheritedEntityChildren[i - children.length];

@@ -2,6 +2,8 @@ package proj.w41k4z.orm.spec;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+
+import proj.w41k4z.orm.annotation.relationship.Join;
 import proj.w41k4z.orm.annotation.relationship.Key;
 import proj.w41k4z.orm.annotation.relationship.ManyToMany;
 import proj.w41k4z.orm.annotation.relationship.ManyToOne;
@@ -14,6 +16,7 @@ import proj.w41k4z.orm.annotation.relationship.OneToOne;
 public class EntityChild {
 
     private Field field;
+    private Integer rank;
 
     /**
      * Default constructor. This is meant to be used by the EntityAccess (which
@@ -21,13 +24,15 @@ public class EntityChild {
      * 
      * @param field the entity field
      */
-    protected EntityChild(Field field) {
-        if (!field.isAnnotationPresent(Key.class)) {
+    protected EntityChild(Field field, Integer rank) {
+        if (field.isAnnotationPresent(Key.class) || field.isAnnotationPresent(Join.class)) {
+            this.field = field;
+            this.rank = rank;
+        } else {
             throw new IllegalArgumentException(
-                    "The annotation @Key is missing for this child relationship. Do not forget it. Source: `"
+                    "The annotation @Key or @Join is missing for this child relationship. Do not forget to use one of these annotation based on your field relationship. Source: `"
                             + field.getDeclaringClass().getSimpleName() + "." + field.getName() + "`");
         }
-        this.field = field;
     }
 
     /**
@@ -48,14 +53,39 @@ public class EntityChild {
         return field;
     }
 
+    /**
+     * This method returns the child rank
+     * 
+     * @return the rank
+     */
+    public Integer getRank() {
+        return rank;
+    }
+
     public Class<? extends Annotation> getRelationshipAnnotation() {
         if (this.field.isAnnotationPresent(OneToOne.class)) {
+            if (field.getType().isArray()) {
+                throw new UnsupportedOperationException("One to One relationship field can not be an array: Source: `"
+                        + this.field.getDeclaringClass().getSimpleName() + "." + this.field.getName() + "'");
+            }
             return OneToOne.class;
         } else if (this.field.isAnnotationPresent(ManyToOne.class)) {
+            if (field.getType().isArray()) {
+                throw new UnsupportedOperationException("Many to One relationship field can not be an array: Source: `"
+                        + this.field.getDeclaringClass().getSimpleName() + "." + this.field.getName() + "'");
+            }
             return ManyToOne.class;
         } else if (this.field.isAnnotationPresent(OneToMany.class)) {
+            if (!field.getType().isArray()) {
+                throw new UnsupportedOperationException("One to Many relationship field has to be an array: Source: `"
+                        + this.field.getDeclaringClass().getSimpleName() + "." + this.field.getName() + "'");
+            }
             return OneToMany.class;
         } else if (this.field.isAnnotationPresent(ManyToMany.class)) {
+            if (!field.getType().isArray()) {
+                throw new UnsupportedOperationException("Many to Many relationship field has to be an array: Source: `"
+                        + this.field.getDeclaringClass().getSimpleName() + "." + this.field.getName() + "'");
+            }
             return ManyToMany.class;
         } else {
             throw new IllegalArgumentException(

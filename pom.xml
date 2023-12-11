@@ -17,7 +17,7 @@
         <dependency>
             <groupId>proj.w41k4z</groupId>
             <artifactId>helpers</artifactId>
-            <version>1.2.2-SNAPSHOT</version>
+            <version>1.2.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>proj.w41k4z</groupId>

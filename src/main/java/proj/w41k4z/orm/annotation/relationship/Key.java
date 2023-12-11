@@ -6,15 +6,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * This annotation must be used with relationship annotation such as
- * {@link OneToOne}, {@link OneToMany}, {@link ManyToMany}...
+ * This annotation must be used with relationship annotation {@link OneToOne}
+ * and {@link ManyToOne}
  * This contains the column used for the JOIN operation
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Key {
     /**
-     * The column name
+     * The column name from the declaring entity used for the join
      * 
      * @return the column to JOIN on
      */

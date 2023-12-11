@@ -129,7 +129,7 @@ public class EntityManager<E, ID> implements DataAccessObject<E, ID> {
         Statement statement = this.transaction.getCurrentDatabaseConnection().getConnection().createStatement();
         Object[] result = EntityMapping.map(
                 (ResultSet) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(), statement),
-                getClass());
+                this.entity.getClass());
         statement.close();
         E[] entities = (E[]) Array.newInstance(this.entity.getClass(), result.length);
         for (int i = 0; i < result.length; i++) {

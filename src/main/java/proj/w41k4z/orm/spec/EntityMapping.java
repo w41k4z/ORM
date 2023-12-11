@@ -10,7 +10,7 @@ import java.util.Map;
 
 import proj.w41k4z.helpers.java.JavaClass;
 
-public class EntityMapping {
+public abstract class EntityMapping {
 
     public static Object[] map(ResultSet resultSet, Class<?> type)
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, SQLException,
@@ -28,18 +28,19 @@ public class EntityMapping {
 
         // The entity metadata containing all the entity fields and related children
         EntityMetadata entityMetadata = EntityAccess.getEntityMetadata(type);
+        EntityChild[] entityRelatedChildren = entityMetadata.getRelatedEntityChildren();
         // The entity id field needed for the entities key
-        EntityField entityFieldId = EntityAccess.getId(type);
+        EntityField entityFieldId = EntityAccess.getId(type, null);
         // The entity children's id field needed for the entities children key
-        EntityField[] entityFieldChildrenId = new EntityField[entityMetadata.getRelatedEntityChildren().length];
+        EntityField[] entityFieldChildrenId = new EntityField[entityRelatedChildren.length];
         int index = 0;
-        for (EntityChild entityChild : entityMetadata.getRelatedEntityChildren()) {
-            entityFieldChildrenId[index++] = EntityAccess.getId(entityChild.getEntityClass());
+        for (EntityChild entityChild : entityRelatedChildren) {
+            entityFieldChildrenId[index++] = EntityAccess.getId(entityChild.getEntityClass(), null);
         }
         // The entity children's fields
-        EntityField[][] entityChildrenFields = new EntityField[entityMetadata.getRelatedEntityChildren().length][];
+        EntityField[][] entityChildrenFields = new EntityField[entityRelatedChildren.length][];
         index = 0;
-        for (EntityChild entityChild : entityMetadata.getRelatedEntityChildren()) {
+        for (EntityChild entityChild : entityRelatedChildren) {
             entityChildrenFields[index++] = EntityAccess.getAllEntityFields(entityChild.getEntityClass(), null);
         }
 
@@ -61,17 +62,19 @@ public class EntityMapping {
             // The entity related children
             for (int i = 0; i < entityFieldChildrenId.length; i++) {
                 Object entityChild = null;
-                Object entityChildId = resultSet.getObject(entityFieldChildrenId[i].getAliasColumnName());
+                Object entityChildId = resultSet.getObject(
+                        entityFieldChildrenId[i].getAliasColumnName() + "_" + entityRelatedChildren[i].getRank());
                 // Skipping operation if the entity child id is null
                 if (entityChildId == null) {
                     continue;
                 }
 
-                String entityChildMapKey = entityMapKey + "_" + entityFieldChildrenId[i].getTableName();
-                Class<?> entityChildClass = entityFieldChildrenId[i].getField().getType().isArray()
-                        ? entityFieldChildrenId[i]
+                String entityChildMapKey = entityMapKey + "_" + entityRelatedChildren[i].getRank() + "_"
+                        + entityFieldChildrenId[i].getTableName();
+                Class<?> entityChildClass = entityRelatedChildren[i].getField().getType().isArray()
+                        ? entityRelatedChildren[i]
                                 .getField().getType().getComponentType()
-                        : entityFieldChildrenId[i].getField().getType();
+                        : entityRelatedChildren[i].getField().getType();
                 entityChild = entityChildClass.getConstructor().newInstance();
                 // Set the entityChild column field value
                 for (EntityField entityField : entityChildrenFields[i]) {
@@ -92,7 +95,7 @@ public class EntityMapping {
         for (Map.Entry<String, Object> entity : entities.entrySet()) {
             entitiesList.add(entity.getValue());
             index = 0;
-            for (EntityChild entityChild : entityMetadata.getRelatedEntityChildren()) {
+            for (EntityChild entityChild : entityRelatedChildren) {
                 List<Object> entityChildren = entitiesChildren
                         .get(entity.getKey() + "_" + entityFieldChildrenId[index++].getTableName());
                 String relationshipTypeClassName = entityChild.getRelationshipAnnotation().getSimpleName();

@@ -39,6 +39,11 @@ public class MySqlDialect implements Dialect {
     }
 
     @Override
+    public String formatString(String value) {
+        return "'" + value + "'";
+    }
+
+    @Override
     public String getSequenceNextValString(String sequenceName) {
         return "NEXTVAL('" + sequenceName + "')";
     }

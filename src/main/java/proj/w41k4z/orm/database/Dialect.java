@@ -51,6 +51,14 @@ public interface Dialect {
     public String formatNumber(Number value);
 
     /**
+     * This method is used to format a string.
+     * 
+     * @param value The string to format
+     * @return The string representation of the string according to the dialect
+     */
+    public String formatString(String value);
+
+    /**
      * This method is used to get the SQL method request for getting a sequence next
      * value.
      * 
