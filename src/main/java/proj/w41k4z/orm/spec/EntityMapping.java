@@ -78,7 +78,9 @@ public abstract class EntityMapping {
                 entityChild = entityChildClass.getConstructor().newInstance();
                 // Set the entityChild column field value
                 for (EntityField entityField : entityChildrenFields[i]) {
-                    JavaClass.setObjectFieldValue(entityChild, resultSet.getObject(entityField.getAliasColumnName()),
+                    JavaClass.setObjectFieldValue(entityChild,
+                            resultSet.getObject(
+                                    entityField.getAliasColumnName() + "_" + entityRelatedChildren[i].getRank()),
                             entityField.getField());
                 }
                 if (entitiesChildren.containsKey(entityChildMapKey)) {
@@ -97,7 +99,12 @@ public abstract class EntityMapping {
             index = 0;
             for (EntityChild entityChild : entityRelatedChildren) {
                 List<Object> entityChildren = entitiesChildren
-                        .get(entity.getKey() + "_" + entityFieldChildrenId[index++].getTableName());
+                        .get(entity.getKey() + "_" + entityChild.getRank() + "_"
+                                + entityFieldChildrenId[index++].getTableName());
+                if (entityChildren == null) {
+                    continue;
+                }
+
                 String relationshipTypeClassName = entityChild.getRelationshipAnnotation().getSimpleName();
                 if (relationshipTypeClassName.equals("OneToOne") || relationshipTypeClassName.equals("ManyToOne")) {
                     // Single object relationship

@@ -186,7 +186,8 @@ public class OQL {
         for (EntityChild child : this.entityMetadata.getRelatedEntityChildren()) {
             EntityField[] childColumns = EntityAccess.getAllEntityFields(child.getEntityClass(), null);
             for (EntityField column : childColumns) {
-                columnTarget.append(child.getRank() + "_" + column.getFullColumnName() + "_" + child.getRank() + ", ");
+                columnTarget.append(
+                        "_" + child.getRank() + "_" + column.getFullColumnName() + "_" + child.getRank() + ", ");
             }
         }
         columnTarget.delete(columnTarget.length() - 2, columnTarget.length());
@@ -224,7 +225,7 @@ public class OQL {
         for (EntityChild child : this.entityMetadata.getRelatedEntityChildren()) {
             Class<?>[] childMainEntityClasses = EntityAccess.getRelatedEntityClasses(child.getEntityClass());
             String childMainTableName = EntityAccess.getTableName(childMainEntityClasses[0]);
-            String childMainTableNameAlias = child.getRank() + "_" + childMainTableName;
+            String childMainTableNameAlias = "_" + child.getRank() + "_" + childMainTableName;
             String childIdColumnName = EntityAccess.getId(child.getEntityClass(), null).getColumnName();
 
             // Operation depends on the relationship type
