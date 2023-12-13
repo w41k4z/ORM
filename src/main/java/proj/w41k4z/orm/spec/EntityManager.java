@@ -5,7 +5,6 @@ import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 import proj.w41k4z.orm.DataAccessObject;
 import proj.w41k4z.orm.OrmConfiguration;
@@ -30,6 +29,8 @@ import proj.w41k4z.orm.database.request.NativeQueryBuilder;
  * EntityManager<Object, Object> entityManager = new EntityManager<>();
  * }
  * </pre>
+ * 
+ * Note: Do not forget to commit or rollback and close the transaction
  */
 public class EntityManager<E, ID> implements DataAccessObject<E, ID> {
 
@@ -117,25 +118,63 @@ public class EntityManager<E, ID> implements DataAccessObject<E, ID> {
         return this.transaction;
     }
 
+    /**
+     * Fetch all the current entity from databasae.
+     * 
+     * @return all the fetched entity
+     * @throws NoSuchMethodException     if one of the entity field setter is not
+     *                                   found
+     * @throws IllegalAccessException    if one of the entity field setter is not
+     *                                   accessible
+     * @throws IllegalArgumentException  if one of the setter parameter type does
+     *                                   not match the field value type
+     * @throws InvocationTargetException if one of the setter cannot be invoked
+     * @throws InstantiationException    if the entity cannot be instantiated
+     * @throws SecurityException         if one of the setter is not accessible
+     * @throws SQLException              if the request fails
+     */
     @Override
     @SuppressWarnings("unchecked")
-    public E[] findAll()
-            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
-            SQLException, InstantiationException, SecurityException {
-        OQL objectQueryLanguage = new OQL(QueryType.GET, this.entity,
-                this.transaction.getCurrentDatabaseConnection().getDataSource().getDialect());
+    public E[] findAll() throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
+            InvocationTargetException, InstantiationException, SecurityException, SQLException {
+        if (this.entity == null) {
+            throw new NullPointerException("The entity is not set");
+        }
+        DatabaseConnection databaseConnection = this.transaction.getCurrentDatabaseConnection();
+        OQL objectQueryLanguage = new OQL(QueryType.GET, this.entity, databaseConnection.getDataSource().getDialect());
         NativeQueryBuilder nativeQueryBuilder = objectQueryLanguage.toNativeQuery();
         QueryExecutor queryExecutor = new QueryExecutor();
-        Statement statement = this.transaction.getCurrentDatabaseConnection().getConnection().createStatement();
         Object[] result = EntityMapping.map(
-                (ResultSet) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(), statement),
+                (ResultSet) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(),
+                        databaseConnection.getConnection()),
                 this.entity.getClass());
-        statement.close();
         E[] entities = (E[]) Array.newInstance(this.entity.getClass(), result.length);
         for (int i = 0; i < result.length; i++) {
             entities[i] = (E) result[i];
         }
         return entities;
+    }
+
+    /**
+     * 
+     * @param connectionName the connection name to use
+     * @return all the fetched entity
+     * @throws NoSuchMethodException     if one of the entity field setter is not
+     *                                   found
+     * @throws IllegalAccessException    if one of the entity field setter is not
+     *                                   accessible
+     * @throws IllegalArgumentException  if one of the setter parameter type does
+     *                                   not match the field value type
+     * @throws InvocationTargetException if one of the setter cannot be invoked
+     * @throws InstantiationException    if the entity cannot be instantiated
+     * @throws SecurityException         if one of the setter is not accessible
+     * @throws SQLException              if the request fails
+     */
+    public E[] findAll(String connectionName)
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
+            InvocationTargetException, InstantiationException, SecurityException, SQLException {
+        this.transaction.use(connectionName);
+        return this.findAll();
     }
 
     @Override

@@ -11,6 +11,14 @@ import java.util.Date;
 public interface Dialect {
 
     /**
+     * This method is used to format any type of data.
+     * 
+     * @param object The object to format
+     * @return The string representation of the object according to the dialect
+     */
+    public String format(Object object);
+
+    /**
      * This method is used to format a date.
      * 
      * @param date The date to format

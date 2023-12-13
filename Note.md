@@ -9,3 +9,7 @@
 ### Bug
 
     - When a @OneToOne collapse with a @OneToMany/@ManyToMany is the same entity as the same related entity, the related entity columns are duplicated in the request generated
+
+### Documentation
+
+    - Repository

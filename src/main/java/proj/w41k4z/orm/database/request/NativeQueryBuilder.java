@@ -28,8 +28,9 @@ public class NativeQueryBuilder {
      * @param condition  the condition to add
      */
     public NativeQueryBuilder(String rawRequest, Condition condition) {
-        StringBuilder request = new StringBuilder("SELECT temp.* FROM (" + rawRequest.toString() + ") temp");
-        this.request = request.append(condition.getCondition());
+        this.request = new StringBuilder(rawRequest);
+        this.setCondition(condition);
+        this.appendCondition(condition);
     }
 
     /**
@@ -139,6 +140,13 @@ public class NativeQueryBuilder {
      */
     public StringBuilder getRequest() {
         return request;
+    }
+
+    public void appendCondition(Condition condition) {
+        if (condition != null) {
+            StringBuilder request = new StringBuilder("SELECT * FROM (" + this.getRequest().toString() + ") ");
+            this.request = request.append(condition.getCondition());
+        }
     }
 
     /**

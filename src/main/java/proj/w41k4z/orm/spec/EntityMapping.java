@@ -98,6 +98,7 @@ public abstract class EntityMapping {
         }
 
         List<Object> entitiesList = new ArrayList<>();
+        // Parent -> Children
         for (Map.Entry<String, Object> entity : entities.entrySet()) {
             entitiesList.add(entity.getValue());
             index = 0;

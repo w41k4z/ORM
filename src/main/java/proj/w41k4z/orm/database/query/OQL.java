@@ -397,26 +397,7 @@ public class OQL {
 
             String value = "NULL";
             if (fieldValue != null) {
-                switch (column.getField().getType().getSimpleName()) {
-                    case "String":
-                        value = this.dialect.formatString(fieldValue.toString());
-                        break;
-                    case "Timestamp":
-                        value = this.dialect.formatDate((java.sql.Timestamp) fieldValue);
-                        break;
-                    case "Date":
-                        value = this.dialect.formatDate((java.sql.Date) fieldValue);
-                        break;
-                    case "Time":
-                        value = this.dialect.formatDate((java.sql.Time) fieldValue);
-                        break;
-                    case "Boolean":
-                        value = this.dialect.formatBoolean((Boolean) fieldValue);
-                        break;
-                    default:
-                        value = this.dialect.formatNumber((Number) fieldValue);
-                        break;
-                }
+                value = this.dialect.format(fieldValue);
             }
 
             if (!EntityField.isNullable(column.getField()) && value.equals("NULL")) {
@@ -478,27 +459,7 @@ public class OQL {
             if (fieldValue == null) {
                 continue;
             } else {
-                String value = "?";
-                switch (column.getField().getType().getSimpleName()) {
-                    case "String":
-                        value = this.dialect.formatString(fieldValue.toString());
-                        break;
-                    case "Timestamp":
-                        value = this.dialect.formatDate((java.sql.Timestamp) fieldValue);
-                        break;
-                    case "Date":
-                        value = this.dialect.formatDate((java.sql.Date) fieldValue);
-                        break;
-                    case "Time":
-                        value = this.dialect.formatDate((java.sql.Time) fieldValue);
-                        break;
-                    case "Boolean":
-                        value = this.dialect.formatBoolean((Boolean) fieldValue);
-                        break;
-                    default:
-                        value = this.dialect.formatNumber((Number) fieldValue);
-                        break;
-                }
+                String value = this.dialect.format(fieldValue);
                 pairedColumnValue.append(column.getColumnName() + " = " + value + ", ");
             }
         }
@@ -525,28 +486,7 @@ public class OQL {
             throw new UnsupportedOperationException("The field `" + id.getField().getName()
                     + "` is null. You can't do changes on an entity with a null id.");
         }
-        String value = "?";
-        switch (id.getField().getType().getSimpleName()) {
-            case "String":
-                value = this.dialect.formatString(idValue.toString());
-                break;
-            case "Timestamp":
-                value = this.dialect.formatDate((java.sql.Timestamp) idValue);
-                break;
-            case "Date":
-                value = this.dialect.formatDate((java.sql.Date) idValue);
-                break;
-            case "Time":
-                value = this.dialect.formatDate((java.sql.Time) idValue);
-                break;
-            case "Boolean":
-                value = this.dialect.formatBoolean((Boolean) idValue);
-                break;
-            default:
-                value = this.dialect.formatNumber((Number) idValue);
-                break;
-        }
-
+        String value = this.dialect.format(idValue);
         return " WHERE " + EntityAccess.getId(this.entity.getClass(), null).getColumnName() + " = " + value;
     }
 }

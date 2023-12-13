@@ -51,6 +51,9 @@ public class Transaction {
         if (!this.databaseConnectionsStatus.get(name)) {
             throw new RuntimeException("The connection " + name + " is not active. Do not forget to start it.");
         }
+        if (this.databaseConnections.get(name) == null) {
+            throw new IllegalArgumentException("The connection " + name + " does not exist.");
+        }
         this.currentDatabaseConnection = this.databaseConnections.get(name);
     }
 
@@ -104,7 +107,7 @@ public class Transaction {
     public void commit(String name) throws SQLException {
         // only commit if the database connection status is active
         if (this.databaseConnectionsStatus.get(name)) {
-            this.databaseConnections.get(name).getConnection().commit();
+            this.databaseConnections.get(name).commit();
         }
     }
 
@@ -128,7 +131,7 @@ public class Transaction {
     public void rollback(String name) throws SQLException {
         // only rollback if the database connection status is active
         if (this.databaseConnectionsStatus.get(name)) {
-            this.databaseConnections.get(name).getConnection().rollback();
+            this.databaseConnections.get(name).rollback();
         }
     }
 
@@ -149,10 +152,6 @@ public class Transaction {
      */
     public void close(String name) {
         this.databaseConnectionsStatus.replace(name, false);
-        try {
-            this.databaseConnections.get(name).getConnection().close();
-        } catch (SQLException e) {
-            // Closing a connection is not a critical operation
-        }
+        this.databaseConnections.get(name).close();
     }
 }

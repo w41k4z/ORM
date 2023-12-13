@@ -5,13 +5,11 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import proj.w41k4z.orm.database.Dialect;
-
 /**
  * This is the MySQL dialect. It is used to format the different types of data
  * in the MySQL database.
  */
-public class MySqlDialect implements Dialect {
+public class MySqlDialect extends DialectImplementation {
 
     @Override
     public String formatDate(Date date) {

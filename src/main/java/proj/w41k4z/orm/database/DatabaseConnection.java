@@ -65,4 +65,20 @@ public class DatabaseConnection {
     public Connection getConnection() {
         return connection;
     }
+
+    public void commit() throws SQLException {
+        this.connection.commit();
+    }
+
+    public void rollback() throws SQLException {
+        this.connection.rollback();
+    }
+
+    public void close() {
+        try {
+            this.connection.close();
+        } catch (SQLException e) {
+            // Closing a connection is not a critical operation
+        }
+    }
 }

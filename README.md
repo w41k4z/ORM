@@ -4,11 +4,8 @@
     - Create a new instance of the QueryExecutor class
     - Create a new instance of the NativeQueryBuilder class (Can be done by using OQL class too)
     - [Optional] Specify the database connection to use via the EntityManager.Transaction.use(String connecitonName) method. (Note: the database connection passed from the EntityManager constructor will be used by default)
-    - Create a new Statement from the EntityManager.Transaction.CurrentDatabaseConnection
-    - Create a new instance of the EntityMapper using the result of the query execution with the statement created above
-    - For transactional operations, do not close the statement until the transaction is committed or rolled back
+    - Create a new instance of the EntityMapper using the result of the query execution with the current database connection from the entity manager transaction created above
     - Commit or rollback the transaction
-    - Close the statement after the transaction.
     - Close the transaction
 
 ## Relationship usage

@@ -5,13 +5,11 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import proj.w41k4z.orm.database.Dialect;
-
 /**
  * This is the PostgreSQL dialect. It is used to format the different types of
  * data in the PostgreSQL database.
  */
-public class PostgreSqlDialect implements Dialect {
+public class PostgreSqlDialect extends DialectImplementation {
 
     @Override
     public String formatDate(Date date) {

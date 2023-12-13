@@ -19,6 +19,7 @@
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/annotation/relationship/Inheritance.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/DataSource.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/dialect/PostgreSqlDialect.java
+/home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/dialect/DialectImplementation.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/annotation/relationship/Key.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/query/OQL.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/spec/EntityAccess.java
