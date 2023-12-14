@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 
 import proj.w41k4z.orm.annotation.Column;
 import proj.w41k4z.orm.annotation.relationship.Join;
-import proj.w41k4z.orm.annotation.relationship.Key;
 import proj.w41k4z.orm.annotation.relationship.ManyToMany;
 import proj.w41k4z.orm.annotation.relationship.ManyToOne;
 import proj.w41k4z.orm.annotation.relationship.OneToMany;
@@ -55,8 +54,7 @@ public class EntityField {
      * @return the column name
      */
     public String getColumnName() {
-        return this.field.isAnnotationPresent(Key.class) ? this.field.getAnnotation(Key.class).column()
-                : getColumnName(this.field);
+        return getColumnName(this.field);
     }
 
     /**
@@ -118,9 +116,6 @@ public class EntityField {
         if (isForeignEntityField(field)) {
             return true;
         }
-        if (isRelatedEntityField(field)) {
-            return field.getAnnotation(Key.class).nullable();
-        }
         if (!field.isAnnotationPresent(Column.class)) {
             throw new IllegalArgumentException(
                     "The field `" + field.getName()
@@ -140,9 +135,9 @@ public class EntityField {
      */
     public static boolean isRelatedEntityField(Field field) {
         if (field.isAnnotationPresent(OneToOne.class) || field.isAnnotationPresent(ManyToOne.class)) {
-            if (!field.isAnnotationPresent(Key.class)) {
+            if (!field.isAnnotationPresent(Column.class)) {
                 throw new UnsupportedOperationException("The field `" + field.getName()
-                        + "` is missing the @Key annotation. Source: `" + field.getDeclaringClass().getSimpleName()
+                        + "` is missing the @Column annotation. Source: `" + field.getDeclaringClass().getSimpleName()
                         + "`");
             }
             return true;

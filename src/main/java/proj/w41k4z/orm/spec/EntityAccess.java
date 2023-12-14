@@ -111,8 +111,8 @@ public abstract class EntityAccess {
 
     /**
      * Get all the entity column fields with their source entity, with inherited
-     * fields. This exclude fields with a relationship annotation (Only those
-     * annotated with @Column are taken).
+     * fields (Only those annotated with @Column, @OneToOne and @ManyToOne are
+     * taken).
      * 
      * @param entityClass  the entity class
      * @param sourceEntity the entity class associated to the field concerned.
@@ -152,7 +152,8 @@ public abstract class EntityAccess {
                     ? entityClass.getSuperclass()
                     : entityClass;
             ArrayList<EntityField> fields = new ArrayList<>();
-            Arrays.stream(JavaClass.getFieldByAnnotation(entityClass, Id.class, Column.class))
+            Arrays.stream(JavaClass.getFieldByAnnotation(entityClass, Id.class, Column.class, OneToOne.class,
+                    ManyToOne.class))
                     .forEach(field -> {
                         fields.add(
                                 new EntityField(field, currentColumnSourceTable));
@@ -165,7 +166,8 @@ public abstract class EntityAccess {
             return allFields;
         } else {
             ArrayList<EntityField> entityFields = new ArrayList<>();
-            Arrays.stream(JavaClass.getFieldByAnnotation(entityClass, Id.class, Column.class))
+            Arrays.stream(JavaClass.getFieldByAnnotation(entityClass, Id.class, Column.class, OneToOne.class,
+                    ManyToOne.class))
                     .forEach(field -> {
                         entityFields.add(
                                 new EntityField(field, sourceEntity == null ? entityClass : sourceEntity));
@@ -178,8 +180,7 @@ public abstract class EntityAccess {
      * Get the entity column fields. The difference with the
      * {@link EntityAccess#getAllEntityFields(Class, Class)
      * getAllEntityFields(Class, Class)} is that it may exclude some inherited
-     * column fields according to the inheritance type occuring. And also, this
-     * include fields with relationship annotation.
+     * column fields according to the inheritance type occuring.
      * To be simple, these are the fields that will be used when inserting or
      * updating an entity.
      * 

@@ -3,11 +3,11 @@ package proj.w41k4z.orm.database.query;
 import java.lang.reflect.InvocationTargetException;
 
 import proj.w41k4z.helpers.java.JavaClass;
+import proj.w41k4z.orm.annotation.Column;
 import proj.w41k4z.orm.annotation.DiscriminatorColumn;
 import proj.w41k4z.orm.annotation.DiscriminatorValue;
 import proj.w41k4z.orm.annotation.relationship.Inheritance;
 import proj.w41k4z.orm.annotation.relationship.Join;
-import proj.w41k4z.orm.annotation.relationship.Key;
 import proj.w41k4z.orm.annotation.relationship.OneToMany;
 import proj.w41k4z.orm.database.Dialect;
 import proj.w41k4z.orm.database.request.NativeQueryBuilder;
@@ -58,18 +58,19 @@ public class OQL {
     public NativeQueryBuilder toNativeQuery()
             throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         this.build();
+        String tableName = this.entityMetadata.getTableName();
         switch (this.queryType) {
             case GET:
-                return new NativeQueryBuilder(
+                return new NativeQueryBuilder(tableName,
                         this.objectQuery.toString().replaceAll("GET", "SELECT").replaceAll("OF", "FROM"));
             case ADD:
-                return new NativeQueryBuilder(
+                return new NativeQueryBuilder(tableName,
                         this.objectQuery.toString().replaceAll("ADD", "INSERT").replaceAll("TO", "INTO"));
             case CHANGE:
-                return new NativeQueryBuilder(
+                return new NativeQueryBuilder(tableName,
                         this.objectQuery.toString().replaceAll("CHANGE", "UPDATE").replaceAll("REPLACE", "SET"));
             case REMOVE:
-                return new NativeQueryBuilder(
+                return new NativeQueryBuilder(tableName,
                         this.objectQuery.toString().replaceAll("REMOVE", "DELETE"));
             default:
                 return null;
@@ -231,7 +232,7 @@ public class OQL {
             // Operation depends on the relationship type
             if (EntityField.isRelatedEntityField(child.getField())) {
                 /* Single Object Relationship */
-                String joinColumnName = child.getField().getAnnotation(Key.class).column();
+                String joinColumnName = child.getField().getAnnotation(Column.class).name();
 
                 perimeterClause.append(" LEFT JOIN ");
                 perimeterClause.append(childMainTableName + " " + childMainTableNameAlias);

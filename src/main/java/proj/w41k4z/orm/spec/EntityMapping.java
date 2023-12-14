@@ -58,6 +58,9 @@ public abstract class EntityMapping {
                 entities.put(entityMapKey, entity);
                 // Set the entity column field value
                 for (EntityField entityField : entityMetadata.getAllEntityFields()) {
+                    if (EntityField.isRelatedEntityField(entityField.getField())) {
+                        continue;
+                    }
                     JavaClass.setObjectFieldValue(entity, resultSet.getObject(entityField.getAliasColumnName()),
                             entityField.getField());
                 }
@@ -82,6 +85,9 @@ public abstract class EntityMapping {
                 entityChild = entityChildClass.getConstructor().newInstance();
                 // Set the entityChild column field value
                 for (EntityField entityField : entityChildrenFields[i]) {
+                    if (EntityField.isRelatedEntityField(entityField.getField())) {
+                        continue;
+                    }
                     JavaClass.setObjectFieldValue(entityChild,
                             resultSet.getObject(
                                     entityField.getAliasColumnName() + "_" + entityRelatedChildren[i].getRank()),
@@ -120,6 +126,8 @@ public abstract class EntityMapping {
                 }
             }
         }
+        resultSet.getStatement().close();
+        resultSet.close();
         return entitiesList.toArray();
     }
 }

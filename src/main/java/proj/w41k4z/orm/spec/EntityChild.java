@@ -3,8 +3,8 @@ package proj.w41k4z.orm.spec;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
+import proj.w41k4z.orm.annotation.Column;
 import proj.w41k4z.orm.annotation.relationship.Join;
-import proj.w41k4z.orm.annotation.relationship.Key;
 import proj.w41k4z.orm.annotation.relationship.ManyToMany;
 import proj.w41k4z.orm.annotation.relationship.ManyToOne;
 import proj.w41k4z.orm.annotation.relationship.OneToMany;
@@ -25,12 +25,12 @@ public class EntityChild {
      * @param field the entity field
      */
     protected EntityChild(Field field, Integer rank) {
-        if (field.isAnnotationPresent(Key.class) || field.isAnnotationPresent(Join.class)) {
+        if (field.isAnnotationPresent(Column.class) || field.isAnnotationPresent(Join.class)) {
             this.field = field;
             this.rank = rank;
         } else {
             throw new IllegalArgumentException(
-                    "The annotation @Key or @Join is missing for this child relationship. Do not forget to use one of these annotation based on your field relationship. Source: `"
+                    "The annotation @Column or @Join is missing for this child relationship. Do not forget to use one of these annotation based on your field relationship. Source: `"
                             + field.getDeclaringClass().getSimpleName() + "." + field.getName() + "`");
         }
     }

@@ -17,7 +17,7 @@ import proj.w41k4z.orm.spec.EntityAccess;
 import proj.w41k4z.orm.spec.EntityField;
 import proj.w41k4z.orm.spec.EntityMapping;
 
-public abstract class Repository<E> {
+public abstract class Repository<E, ID> {
 
     @SuppressWarnings("unchecked")
     public E[] findAll(DatabaseConnection databaseConnection, Condition condition)
@@ -53,7 +53,7 @@ public abstract class Repository<E> {
     public E[] findAll(DatabaseConnection databaseConnection) throws NoSuchMethodException, InvocationTargetException,
             IllegalAccessException, InstantiationException, IllegalArgumentException, SecurityException, SQLException,
             ClassNotFoundException, IOException {
-        return databaseConnection == null ? this.findAll() : this.findAll(databaseConnection, null);
+        return this.findAll(databaseConnection, null);
     }
 
     public E[] findAll()
@@ -65,26 +65,51 @@ public abstract class Repository<E> {
         return results;
     }
 
-    public E findById(DatabaseConnection connection) throws NoSuchMethodException, InvocationTargetException,
-            IllegalAccessException, InstantiationException, IllegalArgumentException, SecurityException, SQLException,
-            ClassNotFoundException, IOException {
+    public E findOne(DatabaseConnection connection, Condition condition)
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException,
+            IllegalArgumentException, SecurityException, ClassNotFoundException, SQLException, IOException {
         if (connection == null) {
-            return this.findById();
+            return this.findOne(condition);
         }
-        String tableName = EntityAccess.getTableName(this.getClass());
-        EntityField columnId = EntityAccess.getId(this.getClass(), null);
-        Object columnIdValue = JavaClass.getObjectFieldValue(this, columnId.getField());
-        String column = tableName + "." + columnId.getColumnName();
-        E[] results = this.findAll(connection, Condition.WHERE(column, Operator.E, columnIdValue));
+        E[] results = this.findAll(connection, condition);
         return results.length > 0 ? results[0] : null;
     }
 
-    public E findById()
+    public E findOne(Condition condition)
             throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException,
             InstantiationException, IllegalArgumentException, SecurityException, SQLException, IOException {
         DatabaseConnection databaseConnection = new DatabaseConnection(OrmConfiguration.getDataSource());
-        E result = this.findById(databaseConnection);
+        E result = this.findOne(databaseConnection, condition);
         databaseConnection.close();
         return result;
+    }
+
+    public E findById(DatabaseConnection connection, ID id) throws NoSuchMethodException, InvocationTargetException,
+            IllegalAccessException, InstantiationException, IllegalArgumentException, SecurityException, SQLException,
+            ClassNotFoundException, IOException {
+        if (connection == null) {
+            return this.findById(id);
+        }
+        String tableName = EntityAccess.getTableName(this.getClass());
+        String column = EntityAccess.getId(this.getClass(), null).getColumnName() + "__of__" + tableName;
+        return this.findOne(connection, Condition.WHERE(column, Operator.E, id));
+    }
+
+    public E findById(ID id) throws NoSuchMethodException, InvocationTargetException,
+            IllegalAccessException, InstantiationException, IllegalArgumentException, SecurityException, SQLException,
+            ClassNotFoundException, IOException {
+        DatabaseConnection databaseConnection = new DatabaseConnection(OrmConfiguration.getDataSource());
+        E result = this.findById(databaseConnection, id);
+        databaseConnection.close();
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    public E findById()
+            throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException,
+            InstantiationException, IllegalArgumentException, SecurityException, SQLException, IOException {
+        EntityField entityId = EntityAccess.getId(this.getClass(), null);
+        Object idValue = JavaClass.getObjectFieldValue(this, entityId.getField());
+        return this.findById((ID) idValue);
     }
 }

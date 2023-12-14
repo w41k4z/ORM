@@ -14,10 +14,13 @@ public class NativeQueryBuilder {
 
     /**
      * Constructor for raw request
-     * 
+     *
+     * @param table      the concerned table (needed when trying to append condition
+     *                   to the request)
      * @param rawRequest the raw request
      */
-    public NativeQueryBuilder(String rawRequest) {
+    public NativeQueryBuilder(String table, String rawRequest) {
+        this.table = table;
         this.request = new StringBuilder(rawRequest);
     }
 
@@ -27,8 +30,8 @@ public class NativeQueryBuilder {
      * @param rawRequest the raw request
      * @param condition  the condition to add
      */
-    public NativeQueryBuilder(String rawRequest, Condition condition) {
-        this.request = new StringBuilder(rawRequest);
+    public NativeQueryBuilder(String table, String rawRequest, Condition condition) {
+        this(table, rawRequest);
         this.setCondition(condition);
         this.appendCondition(condition);
     }
@@ -144,7 +147,8 @@ public class NativeQueryBuilder {
 
     public void appendCondition(Condition condition) {
         if (condition != null) {
-            StringBuilder request = new StringBuilder("SELECT * FROM (" + this.getRequest().toString() + ") ");
+            StringBuilder request = new StringBuilder(
+                    "SELECT * FROM (" + this.getRequest().toString() + ") " + this.table);
             this.request = request.append(condition.getCondition());
         }
     }
