@@ -112,4 +112,130 @@ public abstract class Repository<E, ID> {
         Object idValue = JavaClass.getObjectFieldValue(this, entityId.getField());
         return this.findById((ID) idValue);
     }
+
+    public Integer create(DatabaseConnection connection)
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+            ClassNotFoundException, InstantiationException, SecurityException, IOException, SQLException {
+        if (connection == null) {
+            return this.create();
+        }
+        OQL objectQueryLanguage = new OQL(QueryType.ADD, this, connection.getDataSource().getDialect());
+        NativeQueryBuilder nativeQueryBuilder = objectQueryLanguage.toNativeQuery();
+        QueryExecutor queryExecutor = new QueryExecutor();
+        Integer result = -1;
+        try {
+            result = (Integer) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(),
+                    connection.getConnection());
+        } catch (SQLException e) {
+            if (connection != null && connection.getConnection() != null) {
+                connection.rollback();
+            }
+        }
+        return result;
+    }
+
+    public Integer create()
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+            ClassNotFoundException, InstantiationException, SecurityException, IOException, SQLException {
+        Integer result = -1;
+        DatabaseConnection databaseConnection = null;
+        try {
+            databaseConnection = new DatabaseConnection(OrmConfiguration.getDataSource());
+            result = this.create(databaseConnection);
+            databaseConnection.commit();
+        } catch (SQLException e) {
+            if (databaseConnection != null && databaseConnection.getConnection() != null) {
+                databaseConnection.rollback();
+            }
+        } finally {
+            if (databaseConnection != null && databaseConnection.getConnection() != null) {
+                databaseConnection.close();
+            }
+        }
+        return result;
+    }
+
+    public Integer update(DatabaseConnection connection)
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+            ClassNotFoundException, InstantiationException, SecurityException, IOException, SQLException {
+        if (connection == null) {
+            return this.update();
+        }
+        OQL objectQueryLanguage = new OQL(QueryType.CHANGE, this, connection.getDataSource().getDialect());
+        NativeQueryBuilder nativeQueryBuilder = objectQueryLanguage.toNativeQuery();
+        QueryExecutor queryExecutor = new QueryExecutor();
+        Integer result = -1;
+        try {
+            result = (Integer) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(),
+                    connection.getConnection());
+        } catch (SQLException e) {
+            if (connection != null && connection.getConnection() != null) {
+                connection.rollback();
+            }
+        }
+        return result;
+    }
+
+    public Integer update()
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+            ClassNotFoundException, InstantiationException, SecurityException, IOException, SQLException {
+        DatabaseConnection databaseConnection = null;
+        Integer result = -1;
+        try {
+            databaseConnection = new DatabaseConnection(OrmConfiguration.getDataSource());
+            result = this.update(databaseConnection);
+            databaseConnection.commit();
+        } catch (SQLException error) {
+            if (databaseConnection != null && databaseConnection.getConnection() != null) {
+                databaseConnection.rollback();
+            }
+        } finally {
+            if (databaseConnection != null && databaseConnection.getConnection() != null) {
+                databaseConnection.close();
+            }
+        }
+        return result;
+    }
+
+    public Integer delete(DatabaseConnection connection)
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+            ClassNotFoundException, InstantiationException, SecurityException, IOException, SQLException {
+        if (connection == null) {
+            return this.delete();
+        }
+        Integer result = -1;
+        OQL objectQueryLanguage = new OQL(QueryType.REMOVE, this, connection.getDataSource().getDialect());
+        NativeQueryBuilder nativeQueryBuilder = objectQueryLanguage.toNativeQuery();
+        QueryExecutor queryExecutor = new QueryExecutor();
+        try {
+            result = (Integer) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(),
+                    connection.getConnection());
+        } catch (SQLException error) {
+            if (connection != null && connection.getConnection() != null) {
+                connection.rollback();
+            }
+        }
+        return result;
+    }
+
+    public Integer delete()
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+            ClassNotFoundException, InstantiationException, SecurityException, IOException, SQLException {
+        DatabaseConnection databaseConnection = null;
+        Integer result = -1;
+        try {
+            databaseConnection = new DatabaseConnection(OrmConfiguration.getDataSource());
+            result = this.delete(databaseConnection);
+            databaseConnection.commit();
+        } catch (SQLException error) {
+            if (databaseConnection != null && databaseConnection.getConnection() != null) {
+                databaseConnection.rollback();
+            }
+        } finally {
+            if (databaseConnection != null && databaseConnection.getConnection() != null) {
+                databaseConnection.close();
+            }
+        }
+        return result;
+    }
 }

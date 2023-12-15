@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation is used to indicate a Many to One relationship. Must be used
- * on a field and with the {@link Key} annotation.
+ * on a field and with the {@link Column} annotation.
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
