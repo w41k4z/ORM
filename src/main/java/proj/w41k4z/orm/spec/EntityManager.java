@@ -6,8 +6,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import proj.w41k4z.helpers.java.JavaClass;
 import proj.w41k4z.orm.DataAccessObject;
 import proj.w41k4z.orm.OrmConfiguration;
+import proj.w41k4z.orm.annotation.Generated;
 import proj.w41k4z.orm.database.DatabaseConnection;
 import proj.w41k4z.orm.database.QueryExecutor;
 import proj.w41k4z.orm.database.Transaction;
@@ -15,6 +17,8 @@ import proj.w41k4z.orm.database.query.OQL;
 import proj.w41k4z.orm.database.query.QueryType;
 import proj.w41k4z.orm.database.request.Condition;
 import proj.w41k4z.orm.database.request.NativeQueryBuilder;
+import proj.w41k4z.orm.database.request.Operator;
+import proj.w41k4z.orm.enumeration.GenerationType;
 
 /**
  * The {@code EntityManager} is used to manage entity persistence and
@@ -165,55 +169,144 @@ public class EntityManager<E, ID> implements DataAccessObject<E, ID> {
      * @throws SQLException              if the request fails
      */
     @Override
-    @SuppressWarnings("unchecked")
     public E[] findAll() throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
             InvocationTargetException, InstantiationException, SecurityException, SQLException {
         return this.findAll(null);
     }
 
-    /**
-     * 
-     * @param connectionName the connection name to use
-     * @return all the fetched entity
-     * @throws NoSuchMethodException     if one of the entity field setter is not
-     *                                   found
-     * @throws IllegalAccessException    if one of the entity field setter is not
-     *                                   accessible
-     * @throws IllegalArgumentException  if one of the setter parameter type does
-     *                                   not match the field value type
-     * @throws InvocationTargetException if one of the setter cannot be invoked
-     * @throws InstantiationException    if the entity cannot be instantiated
-     * @throws SecurityException         if one of the setter is not accessible
-     * @throws SQLException              if the request fails
-     */
-    public E[] findAll(String connectionName)
-            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
-            InvocationTargetException, InstantiationException, SecurityException, SQLException {
+    public E findOne(String connectionName, Condition condition)
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException,
+            IllegalArgumentException, SecurityException, ClassNotFoundException, SQLException, IOException {
+        E[] results = this.findAll(connectionName, condition);
+        return results.length > 0 ? results[0] : null;
+    }
+
+    public E findOne(Condition condition)
+            throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException,
+            InstantiationException, IllegalArgumentException, SecurityException, SQLException, IOException {
+        E[] results = this.findAll(condition);
+        return results.length > 0 ? results[0] : null;
+    }
+
+    @Override
+    public E findById(ID id)
+            throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException,
+            InstantiationException, IllegalArgumentException, SecurityException, SQLException, IOException {
+        String tableName = EntityAccess.getTableName(this.entity.getClass());
+        String column = EntityAccess.getId(this.entity.getClass(), null).getColumnName() + "__of__" + tableName;
+        return this.findOne(Condition.WHERE(column, Operator.E, id));
+    }
+
+    public E findById(String connectionName, ID id)
+            throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException,
+            InstantiationException, IllegalArgumentException, SecurityException, SQLException, IOException {
         this.transaction.use(connectionName);
-        return this.findAll();
+        return this.findById(id);
     }
 
     @Override
-    public E findById(ID id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findById'");
+    public Integer create() throws SQLException, NoSuchMethodException, InvocationTargetException,
+            IllegalAccessException, IllegalArgumentException, InstantiationException {
+        DatabaseConnection connection = this.transaction.getCurrentDatabaseConnection();
+        QueryExecutor queryExecutor = new QueryExecutor();
+        EntityField entityId = EntityAccess.getId(this.entity.getClass(), null);
+        if (entityId.isGenerated()) {
+            // Generation auto type are just ignored
+            if (entityId.getField().getAnnotation(Generated.class).type().equals(GenerationType.SEQUENCE)) {
+                String sequenceName = entityId.getField().getAnnotation(Generated.class).sequenceName();
+                if (sequenceName.equals("")) {
+                    throw new IllegalArgumentException(
+                            "The sequence name cannot be empty for generation type SEQUENCE. Source: `"
+                                    + this.getClass().getSimpleName() + "." + entityId.getField().getName() + "`");
+                }
+                String idPrefix = entityId.getField().getAnnotation(Generated.class).pkPrefix();
+                int idLength = entityId.getField().getAnnotation(Generated.class).pkLength();
+                ResultSet result = (ResultSet) queryExecutor.executeRequest(
+                        "SELECT " + connection.getDataSource().getDialect().getSequenceNextValString(sequenceName),
+                        connection.getConnection());
+                result.next();
+                String generatedId = result.getString(1);
+                StringBuilder idValue = new StringBuilder(idPrefix);
+                for (int i = 0; i < idLength - generatedId.length(); i++) {
+                    idValue.append("0");
+                }
+                idValue.append(generatedId);
+                JavaClass.setObjectFieldValue(this, idValue.toString(), entityId.getField());
+                result.getStatement().close();
+                result.close();
+            }
+        }
+        OQL objectQueryLanguage = new OQL(QueryType.ADD, this.entity, connection.getDataSource().getDialect());
+        NativeQueryBuilder nativeQueryBuilder = objectQueryLanguage.toNativeQuery();
+        Integer[] results = new Integer[] { -1, -1 };
+        try {
+            results = (Integer[]) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(),
+                    connection.getConnection());
+            // A generated id was returned
+            if (results[1] != -1) {
+                JavaClass.setObjectFieldValue(this.entity, results[1], entityId.getField());
+            }
+        } catch (SQLException e) {
+            if (connection != null && connection.getConnection() != null) {
+                this.transaction.rollback(connection.getConnectionName());
+            }
+        }
+        return results[0];
+    }
+
+    public Integer create(String connectionName) throws NoSuchMethodException, InvocationTargetException,
+            IllegalAccessException, IllegalArgumentException, InstantiationException, SQLException {
+        this.transaction.use(connectionName);
+        return this.create();
     }
 
     @Override
-    public Integer create() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'create'");
+    public Integer update() throws SQLException, NoSuchMethodException, IllegalAccessException,
+            IllegalArgumentException, InvocationTargetException {
+        DatabaseConnection connection = this.transaction.getCurrentDatabaseConnection();
+        OQL objectQueryLanguage = new OQL(QueryType.CHANGE, this, connection.getDataSource().getDialect());
+        NativeQueryBuilder nativeQueryBuilder = objectQueryLanguage.toNativeQuery();
+        QueryExecutor queryExecutor = new QueryExecutor();
+        Integer[] results = new Integer[] { -1, -1 };
+        try {
+            results = (Integer[]) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(),
+                    connection.getConnection());
+        } catch (SQLException e) {
+            if (connection != null && connection.getConnection() != null) {
+                this.transaction.rollback(connection.getConnectionName());
+            }
+        }
+        return results[0];
+    }
+
+    public Integer update(String connectionName) throws NoSuchMethodException, IllegalAccessException,
+            IllegalArgumentException, InvocationTargetException, SQLException {
+        this.transaction.use(connectionName);
+        return this.update();
     }
 
     @Override
-    public Integer update() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'update'");
+    public Integer delete() throws SQLException, NoSuchMethodException, IllegalAccessException,
+            IllegalArgumentException, InvocationTargetException {
+        DatabaseConnection connection = this.transaction.getCurrentDatabaseConnection();
+        Integer[] results = new Integer[] { -1, -1 };
+        OQL objectQueryLanguage = new OQL(QueryType.REMOVE, this, connection.getDataSource().getDialect());
+        NativeQueryBuilder nativeQueryBuilder = objectQueryLanguage.toNativeQuery();
+        QueryExecutor queryExecutor = new QueryExecutor();
+        try {
+            results = (Integer[]) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(),
+                    connection.getConnection());
+        } catch (SQLException error) {
+            if (connection != null && connection.getConnection() != null) {
+                this.transaction.rollback(connection.getConnectionName());
+            }
+        }
+        return results[0];
     }
 
-    @Override
-    public Integer delete() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'delete'");
+    public Integer delete(String connectionName) throws NoSuchMethodException, IllegalAccessException,
+            IllegalArgumentException, InvocationTargetException, SQLException {
+        this.transaction.use(connectionName);
+        return this.delete();
     }
 }
