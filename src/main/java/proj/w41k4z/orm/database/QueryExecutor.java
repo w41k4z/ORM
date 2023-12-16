@@ -34,14 +34,22 @@ public class QueryExecutor {
      * 
      * @param request    The request to execute
      * @param connection The connection to use
-     * @return The number of rows affected
+     * @return An array of Integer. The [0] is the number of rows affected and the
+     *         [1] is the generated key (if any)
      * @throws SQLException If the request is invalid
      */
-    private Integer executeDMRequest(String request, Connection connection) throws SQLException {
+    private Integer[] executeDMRequest(String request, Connection connection) throws SQLException {
         Statement statement = connection.createStatement();
-        int result = statement.executeUpdate(request);
+        Integer[] results = new Integer[2];
+        results[0] = statement.executeUpdate(request);
+        Integer generatedKey = -1;
+        ResultSet generatedKeys = statement.getGeneratedKeys();
+        if (generatedKeys.next()) {
+            generatedKey = generatedKeys.getInt(1);
+        }
+        results[1] = generatedKey;
         statement.close();
-        return result;
+        return results;
     }
 
     /**

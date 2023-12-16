@@ -4,11 +4,11 @@ public interface DataAccessObject<E, ID> {
 
     public E[] findAll() throws Exception;
 
-    public E findById(ID id);
+    public E findById(ID id) throws Exception;
 
-    public E create();
+    public Integer create() throws Exception;
 
-    public E update();
+    public Integer update() throws Exception;
 
-    public E delete();
+    public Integer delete() throws Exception;
 }

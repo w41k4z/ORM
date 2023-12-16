@@ -7,17 +7,20 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import proj.w41k4z.helpers.java.JavaClass;
+import proj.w41k4z.orm.DataAccessObject;
 import proj.w41k4z.orm.OrmConfiguration;
+import proj.w41k4z.orm.annotation.Generated;
 import proj.w41k4z.orm.database.query.OQL;
 import proj.w41k4z.orm.database.query.QueryType;
 import proj.w41k4z.orm.database.request.Condition;
 import proj.w41k4z.orm.database.request.NativeQueryBuilder;
 import proj.w41k4z.orm.database.request.Operator;
+import proj.w41k4z.orm.enumeration.GenerationType;
 import proj.w41k4z.orm.spec.EntityAccess;
 import proj.w41k4z.orm.spec.EntityField;
 import proj.w41k4z.orm.spec.EntityMapping;
 
-public abstract class Repository<E, ID> {
+public abstract class Repository<E, ID> implements DataAccessObject<E, ID> {
 
     @SuppressWarnings("unchecked")
     public E[] findAll(DatabaseConnection databaseConnection, Condition condition)
@@ -56,6 +59,7 @@ public abstract class Repository<E, ID> {
         return this.findAll(databaseConnection, null);
     }
 
+    @Override
     public E[] findAll()
             throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException,
             InstantiationException, IllegalArgumentException, SecurityException, SQLException, IOException {
@@ -95,6 +99,7 @@ public abstract class Repository<E, ID> {
         return this.findOne(connection, Condition.WHERE(column, Operator.E, id));
     }
 
+    @Override
     public E findById(ID id) throws NoSuchMethodException, InvocationTargetException,
             IllegalAccessException, InstantiationException, IllegalArgumentException, SecurityException, SQLException,
             ClassNotFoundException, IOException {
@@ -119,21 +124,53 @@ public abstract class Repository<E, ID> {
         if (connection == null) {
             return this.create();
         }
+        QueryExecutor queryExecutor = new QueryExecutor();
+        EntityField entityId = EntityAccess.getId(this.getClass(), null);
+        if (entityId.isGenerated()) {
+            // Generation auto type are just ignored
+            if (entityId.getField().getAnnotation(Generated.class).type().equals(GenerationType.SEQUENCE)) {
+                String sequenceName = entityId.getField().getAnnotation(Generated.class).sequenceName();
+                if (sequenceName.equals("")) {
+                    throw new IllegalArgumentException(
+                            "The sequence name cannot be empty for generation type SEQUENCE. Source: `"
+                                    + this.getClass().getSimpleName() + "." + entityId.getField().getName() + "`");
+                }
+                String idPrefix = entityId.getField().getAnnotation(Generated.class).pkPrefix();
+                int idLength = entityId.getField().getAnnotation(Generated.class).pkLength();
+                ResultSet result = (ResultSet) queryExecutor.executeRequest(
+                        "SELECT " + connection.getDataSource().getDialect().getSequenceNextValString(sequenceName),
+                        connection.getConnection());
+                result.next();
+                String generatedId = result.getString(1);
+                StringBuilder idValue = new StringBuilder(idPrefix);
+                for (int i = 0; i < idLength - generatedId.length(); i++) {
+                    idValue.append("0");
+                }
+                idValue.append(generatedId);
+                JavaClass.setObjectFieldValue(this, idValue.toString(), entityId.getField());
+                result.getStatement().close();
+                result.close();
+            }
+        }
         OQL objectQueryLanguage = new OQL(QueryType.ADD, this, connection.getDataSource().getDialect());
         NativeQueryBuilder nativeQueryBuilder = objectQueryLanguage.toNativeQuery();
-        QueryExecutor queryExecutor = new QueryExecutor();
-        Integer result = -1;
+        Integer[] results = new Integer[] { -1, -1 };
         try {
-            result = (Integer) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(),
+            results = (Integer[]) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(),
                     connection.getConnection());
+            // A generated id was returned
+            if (results[1] != -1) {
+                JavaClass.setObjectFieldValue(this, results[1], entityId.getField());
+            }
         } catch (SQLException e) {
             if (connection != null && connection.getConnection() != null) {
                 connection.rollback();
             }
         }
-        return result;
+        return results[0];
     }
 
+    @Override
     public Integer create()
             throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
             ClassNotFoundException, InstantiationException, SecurityException, IOException, SQLException {
@@ -164,18 +201,19 @@ public abstract class Repository<E, ID> {
         OQL objectQueryLanguage = new OQL(QueryType.CHANGE, this, connection.getDataSource().getDialect());
         NativeQueryBuilder nativeQueryBuilder = objectQueryLanguage.toNativeQuery();
         QueryExecutor queryExecutor = new QueryExecutor();
-        Integer result = -1;
+        Integer[] results = new Integer[] { -1, -1 };
         try {
-            result = (Integer) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(),
+            results = (Integer[]) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(),
                     connection.getConnection());
         } catch (SQLException e) {
             if (connection != null && connection.getConnection() != null) {
                 connection.rollback();
             }
         }
-        return result;
+        return results[0];
     }
 
+    @Override
     public Integer update()
             throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
             ClassNotFoundException, InstantiationException, SecurityException, IOException, SQLException {
@@ -203,21 +241,22 @@ public abstract class Repository<E, ID> {
         if (connection == null) {
             return this.delete();
         }
-        Integer result = -1;
+        Integer[] results = new Integer[] { -1, -1 };
         OQL objectQueryLanguage = new OQL(QueryType.REMOVE, this, connection.getDataSource().getDialect());
         NativeQueryBuilder nativeQueryBuilder = objectQueryLanguage.toNativeQuery();
         QueryExecutor queryExecutor = new QueryExecutor();
         try {
-            result = (Integer) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(),
+            results = (Integer[]) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(),
                     connection.getConnection());
         } catch (SQLException error) {
             if (connection != null && connection.getConnection() != null) {
                 connection.rollback();
             }
         }
-        return result;
+        return results[0];
     }
 
+    @Override
     public Integer delete()
             throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
             ClassNotFoundException, InstantiationException, SecurityException, IOException, SQLException {

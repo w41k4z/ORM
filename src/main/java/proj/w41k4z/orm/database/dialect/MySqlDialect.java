@@ -43,12 +43,12 @@ public class MySqlDialect extends DialectImplementation {
 
     @Override
     public String getSequenceNextValString(String sequenceName) {
-        return "NEXTVAL('" + sequenceName + "')";
+        throw new UnsupportedOperationException("MySQL does not support sequences");
     }
 
     @Override
     public String getSequenceCurrentValString(String sequenceName) {
-        return "CURRVAL('" + sequenceName + "')";
+        throw new UnsupportedOperationException("MySQL does not support sequences");
     }
 
 }

@@ -6,11 +6,14 @@ import proj.w41k4z.helpers.java.JavaClass;
 import proj.w41k4z.orm.annotation.Column;
 import proj.w41k4z.orm.annotation.DiscriminatorColumn;
 import proj.w41k4z.orm.annotation.DiscriminatorValue;
+import proj.w41k4z.orm.annotation.Generated;
+import proj.w41k4z.orm.annotation.Id;
 import proj.w41k4z.orm.annotation.relationship.Inheritance;
 import proj.w41k4z.orm.annotation.relationship.Join;
 import proj.w41k4z.orm.annotation.relationship.OneToMany;
 import proj.w41k4z.orm.database.Dialect;
 import proj.w41k4z.orm.database.request.NativeQueryBuilder;
+import proj.w41k4z.orm.enumeration.GenerationType;
 import proj.w41k4z.orm.enumeration.InheritanceType;
 import proj.w41k4z.orm.spec.EntityAccess;
 import proj.w41k4z.orm.spec.EntityChild;
@@ -352,6 +355,13 @@ public class OQL {
         StringBuilder columnTarget = new StringBuilder("(");
 
         for (EntityField column : this.entityMetadata.getEntityFields()) {
+            // Skipping the id column if it is auto generated
+            if (column.getField().isAnnotationPresent(Id.class)
+                    && column.getField().isAnnotationPresent(Generated.class)) {
+                if (column.getField().getAnnotation(Generated.class).type().equals(GenerationType.AUTO)) {
+                    continue;
+                }
+            }
             columnTarget.append(column.getColumnName() + ", ");
         }
         // Only occurs on SAME_TABLE inheritance type
@@ -386,6 +396,13 @@ public class OQL {
         StringBuilder columnValue = new StringBuilder("(");
 
         for (EntityField column : this.entityMetadata.getEntityFields()) {
+            // Auto generated type id column are skipped
+            if (column.getField().isAnnotationPresent(Id.class)
+                    && column.getField().isAnnotationPresent(Generated.class)) {
+                if (column.getField().getAnnotation(Generated.class).type().equals(GenerationType.AUTO)) {
+                    continue;
+                }
+            }
             Object fieldValue = null;
             if (EntityField.isRelatedEntityField(column.getField())) {
                 Object relatedEntityFieldValue = JavaClass.getObjectFieldValue(this.entity, column.getField());
@@ -439,10 +456,8 @@ public class OQL {
     private String CHANGEPairedColumnValue() throws NoSuchMethodException, IllegalAccessException,
             IllegalArgumentException, InvocationTargetException {
         StringBuilder pairedColumnValue = new StringBuilder();
-        EntityField id = EntityAccess.getId(this.entityMetadata.getEntityClass(), null);
-
         for (EntityField column : this.entityMetadata.getEntityFields()) {
-            if (column.getField().getName().equals(id.getField().getName())) {
+            if (column.getField().isAnnotationPresent(Id.class)) {
                 continue;
             }
 

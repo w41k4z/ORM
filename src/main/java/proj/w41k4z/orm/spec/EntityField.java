@@ -3,6 +3,7 @@ package proj.w41k4z.orm.spec;
 import java.lang.reflect.Field;
 
 import proj.w41k4z.orm.annotation.Column;
+import proj.w41k4z.orm.annotation.Generated;
 import proj.w41k4z.orm.annotation.relationship.Join;
 import proj.w41k4z.orm.annotation.relationship.ManyToMany;
 import proj.w41k4z.orm.annotation.relationship.ManyToOne;
@@ -86,6 +87,10 @@ public class EntityField {
         String tableName = this.getTableName();
         String columnName = this.getColumnName();
         return tableName.concat(".").concat(columnName).concat(" AS " + getAliasColumnName());
+    }
+
+    public boolean isGenerated() {
+        return this.field.isAnnotationPresent(Generated.class);
     }
 
     /**

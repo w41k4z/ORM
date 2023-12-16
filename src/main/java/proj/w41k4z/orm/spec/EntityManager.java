@@ -13,6 +13,7 @@ import proj.w41k4z.orm.database.QueryExecutor;
 import proj.w41k4z.orm.database.Transaction;
 import proj.w41k4z.orm.database.query.OQL;
 import proj.w41k4z.orm.database.query.QueryType;
+import proj.w41k4z.orm.database.request.Condition;
 import proj.w41k4z.orm.database.request.NativeQueryBuilder;
 
 /**
@@ -118,6 +119,36 @@ public class EntityManager<E, ID> implements DataAccessObject<E, ID> {
         return this.transaction;
     }
 
+    @SuppressWarnings("unchecked")
+    public E[] findAll(Condition condition)
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
+            InvocationTargetException, InstantiationException, SecurityException, SQLException {
+        if (this.entity == null) {
+            throw new NullPointerException("The entity is not set");
+        }
+        DatabaseConnection databaseConnection = this.transaction.getCurrentDatabaseConnection();
+        OQL objectQueryLanguage = new OQL(QueryType.GET, this.entity, databaseConnection.getDataSource().getDialect());
+        NativeQueryBuilder nativeQueryBuilder = objectQueryLanguage.toNativeQuery();
+        nativeQueryBuilder.appendCondition(condition);
+        QueryExecutor queryExecutor = new QueryExecutor();
+        Object[] result = EntityMapping.map(
+                (ResultSet) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(),
+                        databaseConnection.getConnection()),
+                this.entity.getClass());
+        E[] entities = (E[]) Array.newInstance(this.entity.getClass(), result.length);
+        for (int i = 0; i < result.length; i++) {
+            entities[i] = (E) result[i];
+        }
+        return entities;
+    }
+
+    public E[] findAll(String connectionName, Condition condition)
+            throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
+            InvocationTargetException, InstantiationException, SecurityException, SQLException {
+        this.transaction.use(connectionName);
+        return this.findAll(condition);
+    }
+
     /**
      * Fetch all the current entity from databasae.
      * 
@@ -137,22 +168,7 @@ public class EntityManager<E, ID> implements DataAccessObject<E, ID> {
     @SuppressWarnings("unchecked")
     public E[] findAll() throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
             InvocationTargetException, InstantiationException, SecurityException, SQLException {
-        if (this.entity == null) {
-            throw new NullPointerException("The entity is not set");
-        }
-        DatabaseConnection databaseConnection = this.transaction.getCurrentDatabaseConnection();
-        OQL objectQueryLanguage = new OQL(QueryType.GET, this.entity, databaseConnection.getDataSource().getDialect());
-        NativeQueryBuilder nativeQueryBuilder = objectQueryLanguage.toNativeQuery();
-        QueryExecutor queryExecutor = new QueryExecutor();
-        Object[] result = EntityMapping.map(
-                (ResultSet) queryExecutor.executeRequest(nativeQueryBuilder.getRequest().toString(),
-                        databaseConnection.getConnection()),
-                this.entity.getClass());
-        E[] entities = (E[]) Array.newInstance(this.entity.getClass(), result.length);
-        for (int i = 0; i < result.length; i++) {
-            entities[i] = (E) result[i];
-        }
-        return entities;
+        return this.findAll(null);
     }
 
     /**
@@ -184,19 +200,19 @@ public class EntityManager<E, ID> implements DataAccessObject<E, ID> {
     }
 
     @Override
-    public E create() {
+    public Integer create() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'create'");
     }
 
     @Override
-    public E update() {
+    public Integer update() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'update'");
     }
 
     @Override
-    public E delete() {
+    public Integer delete() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'delete'");
     }
