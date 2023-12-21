@@ -1,6 +1,7 @@
 package proj.w41k4z.orm.database;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -39,9 +40,9 @@ public class QueryExecutor {
      * @throws SQLException If the request is invalid
      */
     private Integer[] executeDMRequest(String request, Connection connection) throws SQLException {
-        Statement statement = connection.createStatement();
+        PreparedStatement statement = connection.prepareStatement(request, Statement.RETURN_GENERATED_KEYS);
         Integer[] results = new Integer[2];
-        results[0] = statement.executeUpdate(request);
+        results[0] = statement.executeUpdate();
         Integer generatedKey = -1;
         ResultSet generatedKeys = statement.getGeneratedKeys();
         if (generatedKeys.next()) {

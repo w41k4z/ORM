@@ -3,6 +3,8 @@ package proj.w41k4z.orm.database;
 import java.sql.SQLException;
 import java.util.HashMap;
 
+import proj.w41k4z.orm.database.connectivity.DatabaseConnection;
+
 /**
  * {@code Transaction} is class used to manage transactions.
  * It supports multiple database connections and cab handle multiple

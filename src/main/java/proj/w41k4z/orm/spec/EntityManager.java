@@ -8,11 +8,11 @@ import java.sql.SQLException;
 
 import proj.w41k4z.helpers.java.JavaClass;
 import proj.w41k4z.orm.DataAccessObject;
-import proj.w41k4z.orm.OrmConfiguration;
 import proj.w41k4z.orm.annotation.Generated;
-import proj.w41k4z.orm.database.DatabaseConnection;
 import proj.w41k4z.orm.database.QueryExecutor;
 import proj.w41k4z.orm.database.Transaction;
+import proj.w41k4z.orm.database.connectivity.ConnectionManager;
+import proj.w41k4z.orm.database.connectivity.DatabaseConnection;
 import proj.w41k4z.orm.database.query.OQL;
 import proj.w41k4z.orm.database.query.QueryType;
 import proj.w41k4z.orm.database.request.Condition;
@@ -71,7 +71,7 @@ public class EntityManager<E, ID> implements DataAccessObject<E, ID> {
     public EntityManager()
             throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException,
             InstantiationException, SQLException, IOException {
-        this(new DatabaseConnection(OrmConfiguration.getDataSource()));
+        this(ConnectionManager.getDatabaseConnection());
     }
 
     /**

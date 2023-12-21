@@ -9,6 +9,8 @@ import proj.w41k4z.fcr.PropertiesFile;
 import proj.w41k4z.orm.database.DataSource;
 import proj.w41k4z.orm.database.DefaultDataSource;
 import proj.w41k4z.orm.database.Dialect;
+import proj.w41k4z.orm.database.connectivity.ConnectionPoolingConfiguration;
+import proj.w41k4z.orm.database.connectivity.DefaultPoolingConnectionConfiguration;
 
 /**
  * This class is used to manage the ORM configuration from the orm.properties
@@ -64,6 +66,11 @@ public final class OrmConfiguration {
     public static final String CONFIG_DIALECT_CLASS_PROPERTY_NAME = "dialect.class";
 
     /**
+     * The property name of the custom Dialect implementation from the configuration
+     */
+    public static final String CONFIG_CONNECTION_POOLING_CLASS_PROPERTY_NAME = "connection.pooling.configuration.class";
+
+    /**
      * This method is used to get the DataSource from the configuration file.
      * 
      * @return The DataSource object
@@ -93,6 +100,24 @@ public final class OrmConfiguration {
         } catch (FileNotFoundException e) {
             throw new UnsupportedOperationException("The configuration file " + CONFIG_FILE_NAME
                     + " was not found on the root path of this project. Check the documentation for more information.");
+        }
+    }
+
+    public static ConnectionPoolingConfiguration getConnectionPoolingConfiguration() {
+        PropertiesFile configFile = new PropertiesFile();
+        try {
+            configFile.load(CONFIG_FILE_NAME);
+            String connectionPoolingConfigurationClassName = (String) configFile.getConfig()
+                    .get(CONFIG_CONNECTION_POOLING_CLASS_PROPERTY_NAME);
+            Class<?> connectionPoolingConfiguration = connectionPoolingConfigurationClassName == null
+                    ? DefaultPoolingConnectionConfiguration.class
+                    : Class.forName(connectionPoolingConfigurationClassName);
+            return ConnectionPoolingConfiguration.class.cast(connectionPoolingConfiguration);
+        } catch (FileNotFoundException e) {
+            throw new UnsupportedOperationException("The configuration file " + CONFIG_FILE_NAME
+                    + " was not found on the root path of this project. Check the documentation for more information.");
+        } catch (Exception e) {
+            throw new UnsupportedOperationException("Something went wrong with the ORM dependency");
         }
     }
 

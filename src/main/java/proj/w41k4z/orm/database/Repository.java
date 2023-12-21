@@ -8,8 +8,9 @@ import java.sql.SQLException;
 
 import proj.w41k4z.helpers.java.JavaClass;
 import proj.w41k4z.orm.DataAccessObject;
-import proj.w41k4z.orm.OrmConfiguration;
 import proj.w41k4z.orm.annotation.Generated;
+import proj.w41k4z.orm.database.connectivity.ConnectionManager;
+import proj.w41k4z.orm.database.connectivity.DatabaseConnection;
 import proj.w41k4z.orm.database.query.OQL;
 import proj.w41k4z.orm.database.query.QueryType;
 import proj.w41k4z.orm.database.request.Condition;
@@ -47,7 +48,7 @@ public abstract class Repository<E, ID> implements DataAccessObject<E, ID> {
     public E[] findAll(Condition condition)
             throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException,
             InstantiationException, IllegalArgumentException, SecurityException, SQLException, IOException {
-        DatabaseConnection databaseConnection = new DatabaseConnection(OrmConfiguration.getDataSource());
+        DatabaseConnection databaseConnection = ConnectionManager.getDatabaseConnection();
         E[] results = this.findAll(databaseConnection, condition);
         databaseConnection.close();
         return results;
@@ -63,7 +64,7 @@ public abstract class Repository<E, ID> implements DataAccessObject<E, ID> {
     public E[] findAll()
             throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException,
             InstantiationException, IllegalArgumentException, SecurityException, SQLException, IOException {
-        DatabaseConnection databaseConnection = new DatabaseConnection(OrmConfiguration.getDataSource());
+        DatabaseConnection databaseConnection = ConnectionManager.getDatabaseConnection();
         E[] results = this.findAll(databaseConnection);
         databaseConnection.close();
         return results;
@@ -82,7 +83,7 @@ public abstract class Repository<E, ID> implements DataAccessObject<E, ID> {
     public E findOne(Condition condition)
             throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException,
             InstantiationException, IllegalArgumentException, SecurityException, SQLException, IOException {
-        DatabaseConnection databaseConnection = new DatabaseConnection(OrmConfiguration.getDataSource());
+        DatabaseConnection databaseConnection = ConnectionManager.getDatabaseConnection();
         E result = this.findOne(databaseConnection, condition);
         databaseConnection.close();
         return result;
@@ -103,7 +104,7 @@ public abstract class Repository<E, ID> implements DataAccessObject<E, ID> {
     public E findById(ID id) throws NoSuchMethodException, InvocationTargetException,
             IllegalAccessException, InstantiationException, IllegalArgumentException, SecurityException, SQLException,
             ClassNotFoundException, IOException {
-        DatabaseConnection databaseConnection = new DatabaseConnection(OrmConfiguration.getDataSource());
+        DatabaseConnection databaseConnection = ConnectionManager.getDatabaseConnection();
         E result = this.findById(databaseConnection, id);
         databaseConnection.close();
         return result;
@@ -177,7 +178,7 @@ public abstract class Repository<E, ID> implements DataAccessObject<E, ID> {
         Integer result = -1;
         DatabaseConnection databaseConnection = null;
         try {
-            databaseConnection = new DatabaseConnection(OrmConfiguration.getDataSource());
+            databaseConnection = ConnectionManager.getDatabaseConnection();
             result = this.create(databaseConnection);
             databaseConnection.commit();
         } catch (SQLException e) {
@@ -220,7 +221,7 @@ public abstract class Repository<E, ID> implements DataAccessObject<E, ID> {
         DatabaseConnection databaseConnection = null;
         Integer result = -1;
         try {
-            databaseConnection = new DatabaseConnection(OrmConfiguration.getDataSource());
+            databaseConnection = ConnectionManager.getDatabaseConnection();
             result = this.update(databaseConnection);
             databaseConnection.commit();
         } catch (SQLException error) {
@@ -263,7 +264,7 @@ public abstract class Repository<E, ID> implements DataAccessObject<E, ID> {
         DatabaseConnection databaseConnection = null;
         Integer result = -1;
         try {
-            databaseConnection = new DatabaseConnection(OrmConfiguration.getDataSource());
+            databaseConnection = ConnectionManager.getDatabaseConnection();
             result = this.delete(databaseConnection);
             databaseConnection.commit();
         } catch (SQLException error) {
