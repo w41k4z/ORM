@@ -3,12 +3,14 @@ package proj.w41k4z.orm.database.connectivity;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.apache.commons.dbcp2.BasicDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 import proj.w41k4z.orm.database.DataSource;
 
 /**
- * This class is used by the {@link proj.w41k4z.orm.spec.EntityManager} to
+ * This class is used by the
+ * {@link proj.w41k4z.orm.database.connectivity.ConnectionManager} to
  * communicate with the database.
  * 
  */
@@ -17,7 +19,7 @@ public class DatabaseConnection {
     private String connectionName;
     private DataSource dataSource;
     private Connection connection;
-    private BasicDataSource basicDataSource;
+    private HikariDataSource hikariDataSource;
 
     /**
      * Constructor with all the parameters
@@ -29,17 +31,18 @@ public class DatabaseConnection {
      * @param maxTotal       the maximum number of connections in the pool
      * @throws SQLException if the connection to the database failed
      */
-    protected DatabaseConnection(String connectionName, DataSource dataSource, int minIdle, int maxIdle, int maxTotal)
+    protected DatabaseConnection(String connectionName, DataSource dataSource, int minIdle, int maxTotal)
             throws SQLException {
         this.connectionName = connectionName;
         this.dataSource = dataSource;
-        this.basicDataSource = new BasicDataSource();
-        this.basicDataSource.setUrl(dataSource.getUrl());
-        this.basicDataSource.setUsername(dataSource.getUserName());
-        this.basicDataSource.setPassword(dataSource.getPassword());
-        this.basicDataSource.setMinIdle(minIdle);
-        this.basicDataSource.setMaxIdle(maxIdle);
-        this.basicDataSource.setMaxTotal(maxTotal);
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(dataSource.getUrl());
+        config.setUsername(dataSource.getUserName());
+        config.setPassword(dataSource.getPassword());
+        config.setAutoCommit(false);
+        config.setMinimumIdle(minIdle);
+        config.setMaximumPoolSize(maxTotal);
+        this.hikariDataSource = new HikariDataSource(config);
     }
 
     /**
@@ -63,7 +66,7 @@ public class DatabaseConnection {
      * @throws SQLException if the connection to the database failed
      */
     protected DatabaseConnection(String connectionName, DataSource dataSource) throws SQLException {
-        this(connectionName, dataSource, 1, 2, 3);
+        this(connectionName, dataSource, 3, 5);
     }
 
     /**
@@ -85,16 +88,16 @@ public class DatabaseConnection {
     }
 
     /**
-     * This method is used to get the Connection object.
+     * This method is used to retrieve the Connection from the pool.
      * If the current connection of this DatabaseConnection object is closed or
-     * null, a new connection is created from its BasicDataSource.
+     * null, a new connection is created from its HikariDataSource.
      * 
      * @return The Connection object
      * @throws SQLException if a database access error occurs
      */
     public Connection getConnection() throws SQLException {
         if (connection == null || connection.isClosed()) {
-            this.connection = basicDataSource.getConnection();
+            this.connection = this.hikariDataSource.getConnection();
         }
         return this.connection;
     }

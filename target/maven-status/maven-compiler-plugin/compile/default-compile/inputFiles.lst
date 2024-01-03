@@ -1,6 +1,5 @@
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/spec/EntityMapping.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/proxy/DynamicRequestInvocationHandler.java
-/home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/DatabaseConnection.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/spec/EntityChild.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/annotation/Column.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/request/NativeQueryBuilder.java
@@ -13,6 +12,7 @@
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/annotation/relationship/ManyToMany.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/spec/EntityManager.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/annotation/relationship/OneToMany.java
+/home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/connectivity/DatabaseConnection.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/OrmConfiguration.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/annotation/relationship/Join.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/annotation/relationship/ManyToOne.java
@@ -22,6 +22,7 @@
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/dialect/DialectImplementation.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/query/OQL.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/spec/EntityAccess.java
+/home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/connectivity/ConnectionManager.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/Transaction.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/DefaultDataSource.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/annotation/Generated.java
@@ -29,10 +30,12 @@
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/annotation/Entity.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/annotation/Id.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/query/QueryType.java
+/home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/connectivity/ConnectionPoolingConfiguration.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/annotation/ConfigProperty.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/annotation/relationship/OneToOne.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/DataAccessObject.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/enumeration/GenerationType.java
+/home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/connectivity/DefaultConnectionPoolingConfiguration.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/Dialect.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/spec/EntityMetadata.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/dialect/MySqlDialect.java

@@ -5,7 +5,7 @@ import java.util.Map;
 
 import proj.w41k4z.orm.OrmConfiguration;
 
-public class DefaultPoolingConnectionConfiguration implements ConnectionPoolingConfiguration {
+public class DefaultConnectionPoolingConfiguration implements ConnectionPoolingConfiguration {
 
     @Override
     public Map<String, DatabaseConnection> initialize() {

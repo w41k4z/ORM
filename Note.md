@@ -8,9 +8,8 @@
 
 ### Bug
 
-    - When a @OneToOne collapse with a @OneToMany/@ManyToMany is the same entity as the same related entity, the related entity columns are duplicated in the request generated
-
-    - Same table inheritance when inserting is forgetting the discriminator column and values
+    - Multiple request handling. (test case: 3 requests 2 simultaneous)
+    The first request on the first attempt works properly, but the second request and the third request are occuring at the same time (the third request does not retrieve a connection from the pool, meaning it was not closed)
 
 ### Documentation
 

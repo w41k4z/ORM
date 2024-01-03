@@ -232,8 +232,6 @@ public class EntityManager<E, ID> implements DataAccessObject<E, ID> {
                 }
                 idValue.append(generatedId);
                 JavaClass.setObjectFieldValue(this, idValue.toString(), entityId.getField());
-                result.getStatement().close();
-                result.close();
             }
         }
         OQL objectQueryLanguage = new OQL(QueryType.ADD, this.entity, connection.getDataSource().getDialect());

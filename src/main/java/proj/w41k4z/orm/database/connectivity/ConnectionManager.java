@@ -15,15 +15,17 @@ public class ConnectionManager {
     }
 
     public static DatabaseConnection getDatabaseConnection(String connectionName) throws SQLException {
-        return dataSources.get(connectionName);
+        DatabaseConnection databaseConnection = dataSources.get(connectionName);
+        // databaseConnection.retrieveConnection();
+        return databaseConnection;
     }
 
     public static DatabaseConnection getDatabaseConnection() throws SQLException {
         return getDatabaseConnection("default");
     }
 
-    public static void createDatabaseConnection(String connectionName, DataSource dataSource, int minIdle, int maxIdle,
+    public static void createDatabaseConnection(String connectionName, DataSource dataSource, int minIdle,
             int maxTotal) throws SQLException {
-        dataSources.put(connectionName, new DatabaseConnection(connectionName, dataSource, minIdle, maxIdle, maxTotal));
+        dataSources.put(connectionName, new DatabaseConnection(connectionName, dataSource, minIdle, maxTotal));
     }
 }

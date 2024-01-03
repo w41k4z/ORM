@@ -149,8 +149,6 @@ public abstract class Repository<E, ID> implements DataAccessObject<E, ID> {
                 }
                 idValue.append(generatedId);
                 JavaClass.setObjectFieldValue(this, idValue.toString(), entityId.getField());
-                result.getStatement().close();
-                result.close();
             }
         }
         OQL objectQueryLanguage = new OQL(QueryType.ADD, this, connection.getDataSource().getDialect());
@@ -225,11 +223,11 @@ public abstract class Repository<E, ID> implements DataAccessObject<E, ID> {
             result = this.update(databaseConnection);
             databaseConnection.commit();
         } catch (SQLException error) {
-            if (databaseConnection != null && databaseConnection.getConnection() != null) {
+            if (databaseConnection != null) {
                 databaseConnection.rollback();
             }
         } finally {
-            if (databaseConnection != null && databaseConnection.getConnection() != null) {
+            if (databaseConnection != null) {
                 databaseConnection.close();
             }
         }
@@ -268,11 +266,11 @@ public abstract class Repository<E, ID> implements DataAccessObject<E, ID> {
             result = this.delete(databaseConnection);
             databaseConnection.commit();
         } catch (SQLException error) {
-            if (databaseConnection != null && databaseConnection.getConnection() != null) {
+            if (databaseConnection != null) {
                 databaseConnection.rollback();
             }
         } finally {
-            if (databaseConnection != null && databaseConnection.getConnection() != null) {
+            if (databaseConnection != null) {
                 databaseConnection.close();
             }
         }

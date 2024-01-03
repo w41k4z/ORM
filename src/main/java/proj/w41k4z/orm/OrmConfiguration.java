@@ -10,7 +10,7 @@ import proj.w41k4z.orm.database.DataSource;
 import proj.w41k4z.orm.database.DefaultDataSource;
 import proj.w41k4z.orm.database.Dialect;
 import proj.w41k4z.orm.database.connectivity.ConnectionPoolingConfiguration;
-import proj.w41k4z.orm.database.connectivity.DefaultPoolingConnectionConfiguration;
+import proj.w41k4z.orm.database.connectivity.DefaultConnectionPoolingConfiguration;
 
 /**
  * This class is used to manage the ORM configuration from the orm.properties
@@ -110,9 +110,10 @@ public final class OrmConfiguration {
             String connectionPoolingConfigurationClassName = (String) configFile.getConfig()
                     .get(CONFIG_CONNECTION_POOLING_CLASS_PROPERTY_NAME);
             Class<?> connectionPoolingConfiguration = connectionPoolingConfigurationClassName == null
-                    ? DefaultPoolingConnectionConfiguration.class
+                    ? DefaultConnectionPoolingConfiguration.class
                     : Class.forName(connectionPoolingConfigurationClassName);
-            return ConnectionPoolingConfiguration.class.cast(connectionPoolingConfiguration);
+            return (ConnectionPoolingConfiguration) connectionPoolingConfiguration.getDeclaredConstructor()
+                    .newInstance();
         } catch (FileNotFoundException e) {
             throw new UnsupportedOperationException("The configuration file " + CONFIG_FILE_NAME
                     + " was not found on the root path of this project. Check the documentation for more information.");

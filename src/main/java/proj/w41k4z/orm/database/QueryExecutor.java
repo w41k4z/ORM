@@ -13,8 +13,7 @@ import java.sql.Statement;
 public class QueryExecutor {
 
     /**
-     * Execute a request. Note: The connection closing is not handled by this
-     * method. You have to close it by yourself
+     * Execute a request.
      * 
      * @param request    The request to execute
      * @param connection The connection to use
@@ -30,8 +29,7 @@ public class QueryExecutor {
     }
 
     /**
-     * Execute a DML request. Note: This close the statement after the request
-     * execution
+     * Execute a DML request.
      * 
      * @param request    The request to execute
      * @param connection The connection to use
@@ -49,15 +47,11 @@ public class QueryExecutor {
             generatedKey = generatedKeys.getInt(1);
         }
         results[1] = generatedKey;
-        statement.close();
         return results;
     }
 
     /**
-     * Execute a DQ request. Note: This does not close directly the statement as it
-     * returns the result set. You have to explicitly close the statement from that
-     * returned resultset when using it by yourself (request execution done by this
-     * framework is already taking care of that)
+     * Execute a DQ request.
      * 
      * @param request   The request to execute
      * @param statement
