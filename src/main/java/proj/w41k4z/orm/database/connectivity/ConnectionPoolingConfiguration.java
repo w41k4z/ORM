@@ -2,6 +2,8 @@ package proj.w41k4z.orm.database.connectivity;
 
 import java.util.Map;
 
+import proj.w41k4z.orm.database.DataSource;
+
 /**
  * This interface is used to manage the connection pooling configuration.
  */
@@ -12,5 +14,5 @@ public interface ConnectionPoolingConfiguration {
      * 
      * @return a Map of the connection names and the DatabaseConnection objects
      */
-    public Map<String, DatabaseConnection> initialize();
+    public Map<String, DataSource> initialize();
 }

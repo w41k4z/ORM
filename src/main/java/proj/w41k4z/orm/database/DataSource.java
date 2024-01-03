@@ -126,4 +126,26 @@ public abstract class DataSource {
     public Dialect getDialect() {
         return dialect;
     }
+
+    /**
+     * This method is used to get the minimum number of idle connections that
+     * DataSource should hold. This method should be overridden if you want to
+     * change the default value.
+     * 
+     * @return The minimum number of idle connections
+     */
+    public int getMinIdle() {
+        return 2;
+    }
+
+    /**
+     * This method is used to get the maximum number of connections that DataSource
+     * should hold. This method should be overridden if you want to change the
+     * default value.
+     * 
+     * @return The maximum number of connections
+     */
+    public int getMaxTotal() {
+        return 5;
+    }
 }

@@ -126,6 +126,9 @@ public abstract class EntityMapping {
                 }
             }
         }
+
+        resultSet.getStatement().close();
+        resultSet.close();
         return entitiesList.toArray();
     }
 }
