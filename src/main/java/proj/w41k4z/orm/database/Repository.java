@@ -122,6 +122,9 @@ public abstract class Repository<E, ID> implements DataAccessObject<E, ID> {
     public Integer create(DatabaseConnection connection)
             throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
             ClassNotFoundException, InstantiationException, SecurityException, IOException, SQLException {
+        if (EntityAccess.isReadOnly(this.getClass())) {
+            throw new IllegalAccessException("The entity `" + this.getClass().getSimpleName() + "` is read only");
+        }
         if (connection == null) {
             return this.create();
         }
@@ -196,6 +199,9 @@ public abstract class Repository<E, ID> implements DataAccessObject<E, ID> {
     public Integer update(DatabaseConnection connection)
             throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
             ClassNotFoundException, InstantiationException, SecurityException, IOException, SQLException {
+        if (EntityAccess.isReadOnly(this.getClass())) {
+            throw new IllegalAccessException("The entity `" + this.getClass().getSimpleName() + "` is read only");
+        }
         if (connection == null) {
             return this.update();
         }
@@ -239,6 +245,9 @@ public abstract class Repository<E, ID> implements DataAccessObject<E, ID> {
     public Integer delete(DatabaseConnection connection)
             throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
             ClassNotFoundException, InstantiationException, SecurityException, IOException, SQLException {
+        if (EntityAccess.isReadOnly(this.getClass())) {
+            throw new IllegalAccessException("The entity `" + this.getClass().getSimpleName() + "` is read only");
+        }
         if (connection == null) {
             return this.delete();
         }

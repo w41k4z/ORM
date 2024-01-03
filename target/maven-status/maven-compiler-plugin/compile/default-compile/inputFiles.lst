@@ -1,6 +1,7 @@
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/spec/EntityMapping.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/proxy/DynamicRequestInvocationHandler.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/spec/EntityChild.java
+/home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/annotation/ReadOnly.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/annotation/Column.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/request/NativeQueryBuilder.java
 /home/alain/Project/Java/orm/src/main/java/proj/w41k4z/orm/database/request/Operator.java

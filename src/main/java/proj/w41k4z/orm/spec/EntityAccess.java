@@ -8,6 +8,7 @@ import proj.w41k4z.helpers.java.JavaClass;
 import proj.w41k4z.orm.annotation.Column;
 import proj.w41k4z.orm.annotation.Entity;
 import proj.w41k4z.orm.annotation.Id;
+import proj.w41k4z.orm.annotation.ReadOnly;
 import proj.w41k4z.orm.annotation.relationship.Inheritance;
 import proj.w41k4z.orm.annotation.relationship.ManyToMany;
 import proj.w41k4z.orm.annotation.relationship.ManyToOne;
@@ -29,6 +30,17 @@ public abstract class EntityAccess {
      */
     public static boolean isEntity(Class<?> entityClass) {
         return entityClass.isAnnotationPresent(Entity.class);
+    }
+
+    /**
+     * Tests if the given class is an immutable entity
+     * 
+     * @param entityClass the class to check
+     * @return true if the class is an immutable entity, false otherwise
+     */
+    public static boolean isReadOnly(Class<?> entityClass) {
+        check(entityClass);
+        return entityClass.isAnnotationPresent(ReadOnly.class);
     }
 
     /**
