@@ -4,7 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,12 +23,12 @@ public abstract class EntityMapping {
          * Map key: entityClass.entityIdValue
          * Map value: entity
          */
-        Map<String, Object> entities = new HashMap<>();
+        Map<String, Object> entities = new LinkedHashMap<>();
         /*
          * Map key: entityClass.entityIdValue_entityChildIdClass
          * Map value: entityChild as a list
          */
-        Map<String, List<Object>> entitiesChildren = new HashMap<>();
+        Map<String, List<Object>> entitiesChildren = new LinkedHashMap<>();
 
         // The entity metadata containing all the entity fields and related children
         EntityMetadata entityMetadata = EntityAccess.getEntityMetadata(type);

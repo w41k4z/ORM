@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
  * This annotation indicates that an entity is immutable, i.e it can not be
  * updated or deleted or inserted.
  */
-@Target(ElementType.FIELD)
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ReadOnly {
 }
