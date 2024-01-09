@@ -18,6 +18,9 @@ import proj.w41k4z.orm.database.connectivity.DefaultConnectionPoolingConfigurati
  * This class is used to manage the ORM configuration from the orm.properties
  * file.
  * This file must be located in the root of the classpath when using this ORM.
+ * If the file is not found, it will try to load it using the current thread
+ * class loader (i.e, the file should be located where your classes are). If it
+ * is still not found, an exception will be thrown.
  * This configuration file must contains the following properties by default:
  * <ul>
  * <li>database.url: The URL of the database</li>
