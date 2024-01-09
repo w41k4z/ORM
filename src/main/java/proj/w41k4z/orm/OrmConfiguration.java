@@ -1,7 +1,9 @@
 package proj.w41k4z.orm;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 
 import proj.w41k4z.fcr.PropertiesFile;
@@ -86,27 +88,59 @@ public final class OrmConfiguration {
      * @throws NoSuchMethodException     If the constructor of the DataSource class
      *                                   cannot be found
      */
-    public static DataSource getDataSource()
-            throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
-            IllegalAccessException, InstantiationException, IllegalArgumentException, SecurityException {
+    public static DataSource getDataSource() {
         PropertiesFile configFile = new PropertiesFile();
+        InputStream inputStream = null;
         try {
-            configFile.load(CONFIG_FILE_NAME);
+            try {
+                // standalone mode
+                inputStream = new FileInputStream(CONFIG_FILE_NAME);
+            } catch (FileNotFoundException e) {
+                // server environment mode
+                inputStream = Thread.currentThread().getContextClassLoader()
+                        .getResourceAsStream("/" + CONFIG_FILE_NAME);
+                if (inputStream == null) {
+                    throw new FileNotFoundException("The configuration file " + CONFIG_FILE_NAME
+                            + " was not found on the root path of this project. Check the documentation for more information.");
+                }
+            }
+            configFile.load(inputStream);
             String dataSourceClassName = (String) configFile.getConfig().get(CONFIG_DATASOURCE_CLASS_PROPERTY_NAME);
             Class<?> dataSource = dataSourceClassName == null
                     ? DefaultDataSource.class
                     : Class.forName(dataSourceClassName);
             return DataSource.loadFrom(dataSource, configFile);
-        } catch (FileNotFoundException e) {
-            throw new UnsupportedOperationException("The configuration file " + CONFIG_FILE_NAME
-                    + " was not found on the root path of this project. Check the documentation for more information.");
+        } catch (Exception e) {
+            throw new UnsupportedOperationException("Something went wrong with the ORM dependency. Source: "
+                    + e.getClass().getName() + " - " + e.getMessage());
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    // closing the stream is not important
+                }
+            }
         }
     }
 
     public static ConnectionPoolingConfiguration getConnectionPoolingConfiguration() {
         PropertiesFile configFile = new PropertiesFile();
+        InputStream inputStream = null;
         try {
-            configFile.load(CONFIG_FILE_NAME);
+            try {
+                // standalone mode
+                inputStream = new FileInputStream(CONFIG_FILE_NAME);
+            } catch (FileNotFoundException e) {
+                // server environment mode
+                inputStream = Thread.currentThread().getContextClassLoader()
+                        .getResourceAsStream("/" + CONFIG_FILE_NAME);
+                if (inputStream == null) {
+                    throw new FileNotFoundException("The configuration file " + CONFIG_FILE_NAME
+                            + " was not found on the root path of this project. Check the documentation for more information.");
+                }
+            }
+            configFile.load(inputStream);
             String connectionPoolingConfigurationClassName = (String) configFile.getConfig()
                     .get(CONFIG_CONNECTION_POOLING_CLASS_PROPERTY_NAME);
             Class<?> connectionPoolingConfiguration = connectionPoolingConfigurationClassName == null
@@ -114,11 +148,17 @@ public final class OrmConfiguration {
                     : Class.forName(connectionPoolingConfigurationClassName);
             return (ConnectionPoolingConfiguration) connectionPoolingConfiguration.getDeclaredConstructor()
                     .newInstance();
-        } catch (FileNotFoundException e) {
-            throw new UnsupportedOperationException("The configuration file " + CONFIG_FILE_NAME
-                    + " was not found on the root path of this project. Check the documentation for more information.");
         } catch (Exception e) {
-            throw new UnsupportedOperationException("Something went wrong with the ORM dependency");
+            throw new UnsupportedOperationException("Something went wrong with the ORM dependency. Source: "
+                    + e.getClass().getName() + " - " + e.getMessage());
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    // closing the stream is not important
+                }
+            }
         }
     }
 

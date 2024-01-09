@@ -11,11 +11,7 @@ public class DefaultConnectionPoolingConfiguration implements ConnectionPoolingC
     @Override
     public Map<String, DataSource> initialize() {
         HashMap<String, DataSource> dataSources = new HashMap<>();
-        try {
-            dataSources.put("default", OrmConfiguration.getDataSource());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        dataSources.put("default", OrmConfiguration.getDataSource());
         return dataSources;
     }
 
