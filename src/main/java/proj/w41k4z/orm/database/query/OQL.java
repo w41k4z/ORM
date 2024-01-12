@@ -68,7 +68,7 @@ public class OQL {
                         this.objectQuery.toString().replaceAll("GET", "SELECT").replaceAll("OF", "FROM"));
             case ADD:
                 return new NativeQueryBuilder(tableName,
-                        this.objectQuery.toString().replaceAll("ADD", "INSERT").replaceAll("TO", "INTO"));
+                        this.objectQuery.toString().replaceAll("ADD", "INSERT").replaceFirst("TO", "INTO"));
             case CHANGE:
                 return new NativeQueryBuilder(tableName,
                         this.objectQuery.toString().replaceAll("CHANGE", "UPDATE").replaceAll("REPLACE", "SET"));
